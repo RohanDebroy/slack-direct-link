@@ -21,7 +21,7 @@ export function run(argv: string[]): void {
         "",
         `🤖 Built by ${AUTHOR}, who got tired of clicking Slack modals by hand.`,
         `   No bots were harmed (and no OAuth was consented to) in the making of this CLI.`,
-        `   Star it, fork it, or just say hi → ${AUTHOR_URL}`,
+        `   ${AUTHOR_URL}`,
         "",
       ].join("\n"),
     );
