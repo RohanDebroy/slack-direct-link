@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { launchCommand } from "./commands/launch.ts";
 import { restartCommand } from "./commands/restart.ts";
+import { extractCommand } from "./commands/extract.ts";
 import { triggerCommand } from "./commands/trigger.ts";
 
 export function run(argv: string[]): void {
@@ -20,6 +21,16 @@ export function run(argv: string[]): void {
     .description("Quit the running Slack and relaunch it with the CDP debug port enabled")
     .option("-p, --port <port>", "debug port", "9222")
     .action((opts) => restartCommand({ port: Number(opts.port) }));
+
+  program
+    .command("extract")
+    .description("Trip a workflow trigger, capture the modal, and scaffold a workflow definition (does not submit)")
+    .argument("<trigger-url>", "the Slack shortcut/trigger URL to trip")
+    .requiredOption("--name <name>", "name for the generated workflow (file workflows/<name>.ts)")
+    .requiredOption("--channel <id>", "channel id to trip the trigger from")
+    .option("-p, --port <port>", "CDP debug port", "9222")
+    .option("--out <path>", "output path (default workflows/<name>.ts)")
+    .action((url, opts) => extractCommand(url, opts));
 
   program
     .command("trigger")
