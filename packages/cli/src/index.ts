@@ -14,8 +14,17 @@ export function run(argv: string[]): void {
   const program = new Command()
     .name("slack-cli")
     .description("Trigger repo-defined Slack workflows via the logged-in desktop app (CDP)")
-    .version(`0.0.0\nby ${AUTHOR} · ${AUTHOR_URL}`)
-    .addHelpText("afterAll", `\nMade by ${AUTHOR} · ${AUTHOR_URL}`);
+    .version(`0.0.0 — hand-wired to your Slack by ${AUTHOR} 🪄  ${AUTHOR_URL}`)
+    .addHelpText(
+      "afterAll",
+      [
+        "",
+        `🤖 Built by ${AUTHOR}, who got tired of clicking Slack modals by hand.`,
+        `   No bots were harmed (and no OAuth was consented to) in the making of this CLI.`,
+        `   Star it, fork it, or just say hi → ${AUTHOR_URL}`,
+        "",
+      ].join("\n"),
+    );
 
   program
     .command("launch")
