@@ -134,7 +134,10 @@ Definitions passed this way are data-only (no code hooks — see *Hooks* below).
 ### `extract <trigger-url>` — scaffold a definition from a live modal
 
 Trips a workflow trigger, captures the live `view_opened` modal, and writes a
-`WorkflowDefinition` to `workflows/<name>.ts`. **It never submits**, so nothing is posted.
+`WorkflowDefinition` into the dir the loader reads from — **relative to the CLI, not your
+cwd** (`SLACK_CLI_WORKFLOWS_DIR`, else the workflows dir beside the CLI). It writes `.ts`
+when running from source under Bun, and a plain-ESM `.mjs` when running from the Node
+bundle (so the bundle can load it immediately). **It never submits**, so nothing is posted.
 
 ```bash
 slack-cli extract "https://slack.com/shortcuts/Ft.../..." \

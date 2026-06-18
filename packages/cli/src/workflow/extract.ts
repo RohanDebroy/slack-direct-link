@@ -104,8 +104,13 @@ export function viewToDefinition(view: ExtractableView, meta: ExtractMeta): Extr
   return { definition, warnings };
 }
 
-/** Serialize a single-page WorkflowDefinition into a workflows/<name>.ts module. */
-export function definitionToSource(def: WorkflowDefinition, warnings: string[] = []): string {
+/** Serialize a single-page WorkflowDefinition into a workflow module (TS, or plain ESM for .mjs). */
+export function definitionToSource(
+  def: WorkflowDefinition,
+  warnings: string[] = [],
+  opts: { typescript?: boolean } = {},
+): string {
+  const typescript = opts.typescript ?? true;
   const fieldLines = def.pages[0]!.fields.map((f) => {
     const parts = [
       `key: ${JSON.stringify(f.key)}`,
@@ -122,10 +127,13 @@ export function definitionToSource(def: WorkflowDefinition, warnings: string[] =
     ? warnings.map((w) => `//   WARNING: ${w}`).join("\n") + "\n"
     : "";
 
-  return `import type { WorkflowDefinition } from "../packages/cli/src/workflow/definition.ts";
+  const header = typescript
+    ? `import type { WorkflowDefinition } from "../packages/cli/src/workflow/definition.ts";\n\n`
+    : "";
+  const decl = typescript ? "const def: WorkflowDefinition = {" : "const def = {";
 
-// Auto-extracted by \`slack-cli extract\`. Review before triggering for real.
-${warningBlock}const def: WorkflowDefinition = {
+  return `${header}// Auto-extracted by \`slack-cli extract\`. Review before triggering for real.
+${warningBlock}${decl}
   name: ${JSON.stringify(def.name)},
   trigger: {
     url: ${JSON.stringify(def.trigger.url)},

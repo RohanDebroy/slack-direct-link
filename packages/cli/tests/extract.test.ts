@@ -87,3 +87,15 @@ test("definitionToSource serializes the checkboxes options catalog", () => {
   expect(src).toContain('format: "checkboxes"');
   expect(src).toContain('"value":"done"');
 });
+
+test("definitionToSource emits plain ESM (no type import/annotation) when typescript:false", () => {
+  const def = {
+    name: "x",
+    trigger: { url: "u", context: { location: "slash_command", channel_id: "C1" } },
+    pages: [{ fields: [{ key: "t", actionId: "A1", format: "plain" }] }],
+  };
+  const src = definitionToSource(def as any, [], { typescript: false });
+  expect(src).not.toContain("import type");
+  expect(src).toContain("const def = {");
+  expect(src).toContain("export default def");
+});

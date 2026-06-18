@@ -1,5 +1,6 @@
-import { writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { resolveWorkflowsDir } from "../workflow/loader.ts";
 import { attach, createStream, triggersTrip, waitFor, conversationsList } from "@slack-automate/core";
 import type { Session } from "@slack-automate/core";
 import type { SlackEvent } from "@slack-automate/core";
@@ -64,8 +65,12 @@ export async function extractCommand(url: string, opts: ExtractOpts): Promise<vo
       channelId,
     });
 
-    const outPath = resolve(opts.out ?? `workflows/${opts.name}.ts`);
-    writeFileSync(outPath, definitionToSource(definition, warnings), "utf8");
+    // Write into the dir the loader reads from (relative to the CLI, NOT cwd), in a
+    // format the current runtime can import: .ts under Bun, plain ESM .mjs under Node.
+    const ext = typeof process.versions.bun === "string" ? ".ts" : ".mjs";
+    const outPath = opts.out ? resolve(opts.out) : resolve(resolveWorkflowsDir(), `${opts.name}${ext}`);
+    mkdirSync(dirname(outPath), { recursive: true });
+    writeFileSync(outPath, definitionToSource(definition, warnings, { typescript: outPath.endsWith(".ts") }), "utf8");
 
     console.log(`extracted ${definition.pages[0]!.fields.length} field(s) -> ${outPath} (modal not submitted)`);
     for (const w of warnings) console.log(`  warning: ${w}`);

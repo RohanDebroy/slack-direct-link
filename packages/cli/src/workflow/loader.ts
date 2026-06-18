@@ -13,7 +13,9 @@ const WORKFLOW_EXTS = [".ts", ".mjs", ".js", ".cjs"];
 
 // Resolve the workflows dir: env override, then a sibling dir (bundled dist/workflows),
 // then repo-root/workflows (dev, four levels up from packages/cli/src/workflow/).
-function defaultWorkflowsDir(): string {
+// Resolve the workflows dir (read + write target), relative to the CLI module — NOT cwd:
+// SLACK_CLI_WORKFLOWS_DIR, then a sibling dir (bundled dist/workflows), then repo-root/workflows.
+export function resolveWorkflowsDir(): string {
   const candidates = [
     process.env.SLACK_CLI_WORKFLOWS_DIR,
     resolve(MODULE_DIR, "workflows"),
@@ -21,7 +23,7 @@ function defaultWorkflowsDir(): string {
   ].filter((d): d is string => typeof d === "string");
   return candidates.find((d) => existsSync(d)) ?? candidates[candidates.length - 1]!;
 }
-const DEFAULT_DIR = defaultWorkflowsDir();
+const DEFAULT_DIR = resolveWorkflowsDir();
 
 export function assertValidDefinition(def: unknown, name: string): asserts def is WorkflowDefinition {
   const result = WorkflowDefinitionSchema.safeParse(def);
