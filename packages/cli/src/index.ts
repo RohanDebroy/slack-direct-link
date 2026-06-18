@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { launchCommand } from "./commands/launch.ts";
 import { restartCommand } from "./commands/restart.ts";
+import { ensureDebugCommand } from "./commands/ensure.ts";
 import { extractCommand } from "./commands/extract.ts";
 import { triggerCommand } from "./commands/trigger.ts";
 import { runCommand } from "./commands/run.ts";
@@ -23,6 +24,12 @@ export function run(argv: string[]): void {
     .description("Quit the running Slack and relaunch it with the CDP debug port enabled")
     .option("-p, --port <port>", "debug port", "9222")
     .action((opts) => restartCommand({ port: Number(opts.port) }));
+
+  program
+    .command("ensure-debug")
+    .description("Ensure Slack is running with the CDP debug port; skip the restart if it already is")
+    .option("-p, --port <port>", "debug port", "9222")
+    .action((opts) => ensureDebugCommand({ port: Number(opts.port) }));
 
   program
     .command("extract")
