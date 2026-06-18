@@ -1,0 +1,11 @@
+{
+  "name": "@slack-automate/cli",
+  "private": true,
+  "type": "module",
+  "bin": { "slack-cli": "./bin/slack-cli" },
+  "dependencies": {
+    "@slack-automate/core": "workspace:*",
+    "commander": "^12.1.0",
+    "zod": "^3.23.0"
+  }
+}

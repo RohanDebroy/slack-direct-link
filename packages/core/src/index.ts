@@ -2,6 +2,7 @@ export { attach, NoSlackTargetError, CdpUnreachableError } from "./cdp/connect.t
 export type { Session, ConnectOptions } from "./cdp/types.ts";
 export { triggersTrip } from "./api/workflows.ts";
 export { viewsGet, viewsSubmit } from "./api/views.ts";
+export type { ViewsSubmitResponse } from "./api/views.ts";
 export { uploadFile } from "./api/files.ts";
 export { conversationsList, conversationsMark } from "./api/conversations.ts";
 export type { ChannelMap } from "./api/conversations.ts";
