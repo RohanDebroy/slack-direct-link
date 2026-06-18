@@ -48,3 +48,19 @@ test("assertValidDefinition rejects an unknown field format (zod enum)", () => {
   };
   expect(() => assertValidDefinition(bad, "inline")).toThrow(InvalidWorkflowError);
 });
+
+import { listWorkflows } from "../src/workflow/loader.ts";
+
+test("listWorkflows summarizes valid workflows and reports invalid ones", async () => {
+  const { workflows, errors } = await listWorkflows(FIX);
+  // fixtures dir has good-workflow.ts (valid) + bad-workflow.ts (invalid)
+  const good = workflows.find((w) => w.name === "good-workflow");
+  expect(good).toBeDefined();
+  expect(good!.declaredName).toBe("good-workflow");
+  expect(good!.pages).toBe(1);
+  expect(good!.fields).toBe(1);
+  expect(good!.fieldKeys).toEqual(["title"]);
+  expect(good!.channelId).toBe("C1");
+  expect(good!.triggerUrl).toBe("https://slack/x");
+  expect(errors.some((e) => e.file === "bad-workflow.ts")).toBe(true);
+});

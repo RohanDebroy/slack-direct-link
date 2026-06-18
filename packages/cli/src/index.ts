@@ -4,6 +4,7 @@ import { restartCommand } from "./commands/restart.ts";
 import { extractCommand } from "./commands/extract.ts";
 import { triggerCommand } from "./commands/trigger.ts";
 import { runCommand } from "./commands/run.ts";
+import { listCommand } from "./commands/list.ts";
 
 export function run(argv: string[]): void {
   const program = new Command()
@@ -32,6 +33,12 @@ export function run(argv: string[]): void {
     .option("-p, --port <port>", "CDP debug port", "9222")
     .option("--out <path>", "output path (default workflows/<name>.ts)")
     .action((url, opts) => extractCommand(url, opts));
+
+  program
+    .command("list")
+    .description("List all workflows in workflows/ with identifying metadata")
+    .option("--json", "output as JSON")
+    .action((opts) => listCommand(opts));
 
   program
     .command("trigger")

@@ -49,6 +49,8 @@ export type TriggerDef = z.infer<typeof TriggerDefSchema>;
 /** The serialisable (JSON-expressible) part of a workflow definition. */
 export const WorkflowDefinitionSchema = z.object({
   name: z.string().min(1),
+  /** Optional human-readable note, surfaced by `slack-cli list` for identification. */
+  description: z.string().optional(),
   trigger: TriggerDefSchema,
   /** Ordered modal pages. One page = one view_opened -> views.submit cycle. */
   pages: z.array(PageDefSchema).min(1),
