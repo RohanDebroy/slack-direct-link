@@ -86,7 +86,7 @@ export function viewToDefinition(view: ExtractableView, meta: ExtractMeta): Extr
     fields.push(field);
 
     if (format === "richText") {
-      warnings.push(`field "${key}": rich_text_input is ambiguous (plain/bullet/link) — defaulted to richText; switch to bulletText/bulletLink if needed`);
+      warnings.push(`field "${key}": rich_text_input is ambiguous — defaulted to richText; switch to link, bulletText, or bulletLink if needed`);
     }
   }
 

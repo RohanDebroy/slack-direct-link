@@ -171,6 +171,7 @@ export default def;
 | `richText`           | `rich_text_input` (plain section)            | string             |
 | `bulletText`         | `rich_text_input` (bulleted text)            | string             |
 | `bulletLink`         | `rich_text_input` (bulleted link)            | URL string         |
+| `link`               | `rich_text_input` (inline clickable link)    | URL string         |
 | `multiConversations` | `multi_conversations_select`                 | string[] of IDs    |
 | `conversation`       | `conversations_select`                       | user/channel ID    |
 | `fileUpload`         | `file_input` (upload + link the file id)     | local file path    |

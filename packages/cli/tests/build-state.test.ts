@@ -92,3 +92,22 @@ test("richText formats a value as a plain rich_text_input section (no bullet)", 
     },
   });
 });
+
+test("link formats a URL as a highlighted (clickable) rich_text link element", () => {
+  const blockIds = blockIdMap([{ block_id: "B_j", element: { action_id: "A_j" } }]);
+  const { values } = buildState(
+    { fields: [{ key: "jiraLink", actionId: "A_j", format: "link" }] },
+    { jiraLink: "https://jira/X-1" },
+    blockIds,
+    new Map(),
+  );
+  expect(values["B_j"]).toEqual({
+    A_j: {
+      type: "rich_text_input",
+      rich_text_value: {
+        type: "rich_text",
+        elements: [{ type: "rich_text_section", elements: [{ type: "link", url: "https://jira/X-1" }] }],
+      },
+    },
+  });
+});

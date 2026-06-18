@@ -28,6 +28,14 @@ const bulletLink = (url: string) => ({
   },
 });
 
+const link = (url: string) => ({
+  type: "rich_text_input" as const,
+  rich_text_value: {
+    type: "rich_text",
+    elements: [{ type: "rich_text_section", elements: [{ type: "link", url }] }],
+  },
+});
+
 const richText = (text: string) => ({
   type: "rich_text_input" as const,
   rich_text_value: {
@@ -52,6 +60,7 @@ function defaultFormat(field: FieldDef, raw: unknown): unknown {
     case "plain": return plain(String(raw));
     case "bulletText": return bulletText(String(raw));
     case "bulletLink": return bulletLink(String(raw));
+    case "link": return link(String(raw));
     case "richText": return richText(String(raw));
     case "multiConversations": return { type: "multi_conversations_select", selected_conversations: raw as string[] };
     case "conversation": return { type: "conversations_select", selected_conversation: String(raw) };

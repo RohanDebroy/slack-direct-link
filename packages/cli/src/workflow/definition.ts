@@ -17,6 +17,7 @@ export const FormatSchema = z.enum([
   "plain",
   "bulletText",
   "bulletLink",
+  "link",
   "richText",
   "multiConversations",
   "conversation",

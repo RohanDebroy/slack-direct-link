@@ -48,8 +48,8 @@ bun packages/cli/bin/slack-cli trigger <name> --payload-file ./payload.json
 ## Payload rules
 
 Flat JSON keyed by the definition's field `key`s. Field formats: `plain`, `richText`,
-`bulletText`, `bulletLink`, `multiConversations` (ID array), `conversation` (one ID),
-`fileUpload`.
+`link` (clickable URL), `bulletText`, `bulletLink`, `multiConversations` (ID array),
+`conversation` (one ID), `fileUpload`.
 
 - A `fileUpload` field's value is a **local file path** — the CLI uploads it and links the
   file id into the modal's `file_input`.
