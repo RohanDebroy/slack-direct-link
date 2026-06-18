@@ -39,7 +39,7 @@ const DEFAULT_DEPS: RunDeps = {
   triggersTrip: _triggersTrip, uploadFile: _uploadFile, viewsSubmit: _viewsSubmit, waitFor: _waitFor,
 };
 
-function resolveContext(def: WorkflowDefinition, payload: Record<string, unknown>): TriggerContext {
+export function resolveContext(def: WorkflowDefinition, payload: Record<string, unknown>): TriggerContext {
   if (def.buildContext) return def.buildContext(payload);
   const channel = payload._channel;
   if (typeof channel === "string") return { ...def.trigger.context, channel_id: channel };
@@ -97,6 +97,7 @@ export async function runWorkflow(input: RunInput): Promise<RunOutput> {
     // so the pushed view's frame isn't missed. Swallow it if we end up not advancing.
     const moreToCome = p < def.pages.length - 1;
     const nextPromise: Promise<ViewOpened> | undefined = moreToCome
+      // page 0 matches by client_token; pushed views carry no matching token, so subsequent pages match the next view_opened (sound because we subscribe before submitting).
       ? d.waitFor(stream, (e: SlackEvent): e is ViewOpened => e.type === "view_opened", { timeout })
       : undefined;
 

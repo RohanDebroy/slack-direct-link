@@ -47,6 +47,10 @@ function defaultFormat(field: FieldDef, raw: unknown): unknown {
     case "multiConversations": return { type: "multi_conversations_select", selected_conversations: raw as string[] };
     case "conversation": return { type: "conversations_select", selected_conversation: String(raw) };
     case "fileUpload": throw new Error(`buildState: fileUpload field "${field.key}" must resolve via uploadedIds`);
+    default: {
+      const _exhaustive: never = field.format;
+      throw new Error(`buildState: unhandled format "${String(_exhaustive)}"`);
+    }
   }
 }
 

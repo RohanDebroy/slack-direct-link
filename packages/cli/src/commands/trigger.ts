@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { attach, createStream } from "@slack-automate/core";
 import { loadWorkflow } from "../workflow/loader.ts";
 import { validatePayload } from "../workflow/validate.ts";
-import { runWorkflow } from "../workflow/runner.ts";
+import { runWorkflow, resolveContext } from "../workflow/runner.ts";
 
 export interface TriggerOpts {
   payload?: string;
@@ -38,7 +38,7 @@ export async function triggerCommand(name: string, opts: TriggerOpts): Promise<v
   if (opts.dryRun) {
     console.log(`[dry-run] workflow "${def.name}"`);
     console.log(`[dry-run] trigger url: ${def.trigger.url}`);
-    console.log(`[dry-run] context: ${JSON.stringify(def.buildContext ? def.buildContext(payload) : def.trigger.context)}`);
+    console.log(`[dry-run] context: ${JSON.stringify(resolveContext(def, payload))}`);
     def.pages.forEach((page, p) => {
       console.log(`[dry-run] page ${p}:`);
       for (const f of page.fields) {
