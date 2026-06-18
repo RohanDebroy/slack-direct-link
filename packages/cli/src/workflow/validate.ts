@@ -1,11 +1,10 @@
 import { existsSync } from "node:fs";
+import { FORMATS } from "./definition.ts";
 import type { WorkflowDefinition, Format } from "./definition.ts";
 
 export class PayloadValidationError extends Error {}
 
-const VALID_FORMATS: ReadonlySet<Format> = new Set<Format>([
-  "plain", "bulletText", "bulletLink", "richText", "multiConversations", "conversation", "fileUpload",
-]);
+const VALID_FORMATS: ReadonlySet<Format> = new Set<Format>(FORMATS);
 
 export function validatePayload(
   def: WorkflowDefinition,

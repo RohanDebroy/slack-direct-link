@@ -39,3 +39,12 @@ test("assertValidDefinition accepts a well-formed inline definition", () => {
   };
   expect(() => assertValidDefinition(good, "inline")).not.toThrow();
 });
+
+test("assertValidDefinition rejects an unknown field format (zod enum)", () => {
+  const bad = {
+    name: "x",
+    trigger: { url: "u", context: { location: "slash_command", channel_id: "C1" } },
+    pages: [{ fields: [{ key: "k", actionId: "A", format: "bogus" }] }],
+  };
+  expect(() => assertValidDefinition(bad, "inline")).toThrow(InvalidWorkflowError);
+});
