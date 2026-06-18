@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "view": {
+    "id": "V0B2R4W0G4D",
+    "type": "modal",
+    "callback_id": "hermes_form",
+    "blocks": [],
+    "title": { "type": "plain_text", "text": "Share new extension", "emoji": true },
+    "hash": "1778411759.p3ZrSeNU"
+  }
+}
