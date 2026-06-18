@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { launchCommand } from "./commands/launch.ts";
+import { restartCommand } from "./commands/restart.ts";
 import { triggerCommand } from "./commands/trigger.ts";
 
 export function run(argv: string[]): void {
@@ -13,6 +14,12 @@ export function run(argv: string[]): void {
     .description("Launch Slack with the CDP debug port enabled")
     .option("-p, --port <port>", "debug port", "9222")
     .action((opts) => launchCommand({ port: Number(opts.port) }));
+
+  program
+    .command("restart")
+    .description("Quit the running Slack and relaunch it with the CDP debug port enabled")
+    .option("-p, --port <port>", "debug port", "9222")
+    .action((opts) => restartCommand({ port: Number(opts.port) }));
 
   program
     .command("trigger")
