@@ -16,6 +16,7 @@ export function validatePayload(
       if (!VALID_FORMATS.has(field.format)) {
         throw new PayloadValidationError(`unknown format "${field.format}" for field "${field.key}" (page ${p})`);
       }
+      if (field.format === "checkboxes") continue; // omitted checkbox = unchecked; never required
       const raw = payload[field.key];
       if (raw === undefined) {
         if (field.optional) continue;

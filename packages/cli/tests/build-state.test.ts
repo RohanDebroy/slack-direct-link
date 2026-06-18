@@ -181,3 +181,30 @@ test("autolink with no URL yields a single text element (unchanged shape)", () =
   const els = (values["B_n"]!.A_n as any).rich_text_value.elements[0].elements;
   expect(els).toEqual([{ type: "text", text: "plain note" }]);
 });
+
+const checkboxOpts = [
+  { text: { type: "plain_text", text: "Done", emoji: true }, value: "done" },
+  { text: { type: "plain_text", text: "Tested", emoji: true }, value: "tested" },
+];
+const checkboxPage = { fields: [{ key: "checks", actionId: "A_c", format: "checkboxes" as const, options: checkboxOpts }] };
+const checkboxBlocks = blockIdMap([{ block_id: "B_c", element: { action_id: "A_c" } }]);
+
+test("checkboxes: payload true selects all options", () => {
+  const { values } = buildState(checkboxPage, { checks: true }, checkboxBlocks, new Map());
+  expect(values["B_c"]).toEqual({ A_c: { type: "checkboxes", selected_options: checkboxOpts } });
+});
+
+test("checkboxes: payload array selects the matching options by value", () => {
+  const { values } = buildState(checkboxPage, { checks: ["tested"] }, checkboxBlocks, new Map());
+  expect(values["B_c"]).toEqual({ A_c: { type: "checkboxes", selected_options: [checkboxOpts[1]] } });
+});
+
+test("checkboxes: omitted or false is left unchecked (field absent from submit)", () => {
+  expect(buildState(checkboxPage, {}, checkboxBlocks, new Map()).values["B_c"]).toBeUndefined();
+  expect(buildState(checkboxPage, { checks: false }, checkboxBlocks, new Map()).values["B_c"]).toBeUndefined();
+});
+
+test("checkboxes: truthy payload with no options catalog throws (needs re-extract)", () => {
+  const page = { fields: [{ key: "checks", actionId: "A_c", format: "checkboxes" as const }] };
+  expect(() => buildState(page, { checks: true }, checkboxBlocks, new Map())).toThrow(/options catalog/);
+});

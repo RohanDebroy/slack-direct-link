@@ -91,6 +91,7 @@ function defaultFormat(field: FieldDef, raw: unknown): unknown {
     case "multiConversations": return { type: "multi_conversations_select", selected_conversations: raw as string[] };
     case "conversation": return { type: "conversations_select", selected_conversation: String(raw) };
     case "fileUpload": throw new Error(`buildState: fileUpload field "${field.key}" must resolve via uploadedIds`);
+    case "checkboxes": throw new Error(`buildState: checkboxes field "${field.key}" must resolve via its options catalog`);
     default: {
       const _exhaustive: never = field.format;
       throw new Error(`buildState: unhandled format "${String(_exhaustive)}"`);
@@ -120,6 +121,22 @@ export function buildState(
         throw new Error(`buildState: no uploaded file id for required field "${field.key}"`);
       }
       put(field.actionId, { type: "file_input", files: [{ id }] });
+      continue;
+    }
+    if (field.format === "checkboxes") {
+      const opts = field.options ?? [];
+      const want = payload[field.key];
+      const selected =
+        want === true ? opts
+        : Array.isArray(want) ? opts.filter((o) => (want as unknown[]).includes(o.value))
+        : [];
+      if (selected.length === 0) {
+        if (want && opts.length === 0) {
+          throw new Error(`buildState: checkboxes field "${field.key}" has no options catalog (re-run extract)`);
+        }
+        continue; // unchecked -> leave the field out of the submit
+      }
+      put(field.actionId, { type: "checkboxes", selected_options: selected });
       continue;
     }
     const raw = payload[field.key];

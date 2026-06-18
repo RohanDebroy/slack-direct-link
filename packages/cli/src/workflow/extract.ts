@@ -5,7 +5,7 @@ interface ViewInputBlock {
   block_id?: string;
   optional?: boolean;
   label?: { text?: string } | undefined;
-  element?: { type?: string; action_id?: string } | undefined;
+  element?: { type?: string; action_id?: string; options?: unknown[] } | undefined;
 }
 
 export interface ExtractableView {
@@ -33,6 +33,7 @@ const ELEMENT_FORMAT: Record<string, Format> = {
   multi_conversations_select: "multiConversations",
   conversations_select: "conversation",
   file_input: "fileUpload",
+  checkboxes: "checkboxes",
 };
 
 /** "Extension Version" -> "extensionVersion"; "" -> "". */
@@ -83,6 +84,11 @@ export function viewToDefinition(view: ExtractableView, meta: ExtractMeta): Extr
     const field: FieldDef = block.optional
       ? { key, actionId, format, optional: true }
       : { key, actionId, format };
+    if (format === "checkboxes") {
+      const opts = (block.element?.options ?? []) as FieldDef["options"];
+      if (opts && opts.length) field.options = opts;
+      else warnings.push(`field "${key}": checkboxes has no options in the modal — verify the catalog`);
+    }
     fields.push(field);
 
     if (format === "richText") {
@@ -101,8 +107,15 @@ export function viewToDefinition(view: ExtractableView, meta: ExtractMeta): Extr
 /** Serialize a single-page WorkflowDefinition into a workflows/<name>.ts module. */
 export function definitionToSource(def: WorkflowDefinition, warnings: string[] = []): string {
   const fieldLines = def.pages[0]!.fields.map((f) => {
-    const opt = f.optional ? ", optional: true" : "";
-    return `        { key: ${JSON.stringify(f.key)}, actionId: ${JSON.stringify(f.actionId)}, format: ${JSON.stringify(f.format)}${opt} },`;
+    const parts = [
+      `key: ${JSON.stringify(f.key)}`,
+      `actionId: ${JSON.stringify(f.actionId)}`,
+      `format: ${JSON.stringify(f.format)}`,
+    ];
+    if (f.optional) parts.push("optional: true");
+    if (f.autolink) parts.push("autolink: true");
+    if (f.options) parts.push(`options: ${JSON.stringify(f.options)}`);
+    return `        { ${parts.join(", ")} },`;
   });
 
   const warningBlock = warnings.length

@@ -49,12 +49,13 @@ bun packages/cli/bin/slack-cli trigger <name> --payload-file ./payload.json
 
 Flat JSON keyed by the definition's field `key`s. Field formats: `plain`, `richText`,
 `link` (clickable URL), `bulletText`, `bulletLink`, `multiConversations` (ID array),
-`conversation` (one ID), `fileUpload`.
+`conversation` (one ID), `fileUpload`, `checkboxes`.
 
 - A `fileUpload` field's value is a **local file path** — the CLI uploads it and links the
   file id into the modal's `file_input`.
 - Conversation/user fields take **Slack IDs** (`U…`/`C…`), not names.
 - `autolink: true` on a `richText`/`bulletText` field highlights pasted URLs inside the text.
+- `checkboxes`: pass `true` (tick all) or an array of option values; omit = unchecked. `extract` captures the option catalog.
 - Add `"_channel": "C…"` to override the definition's channel for one run.
 
 ## Gotchas

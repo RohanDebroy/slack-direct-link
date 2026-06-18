@@ -22,10 +22,19 @@ export const FormatSchema = z.enum([
   "multiConversations",
   "conversation",
   "fileUpload",
+  "checkboxes",
 ]);
 export type Format = z.infer<typeof FormatSchema>;
 /** Runtime list of valid formats, derived from the schema. */
 export const FORMATS = FormatSchema.options;
+
+export const CheckboxOptionSchema = z
+  .object({
+    text: z.object({ type: z.string(), text: z.string() }).passthrough(),
+    value: z.string(),
+  })
+  .passthrough();
+export type CheckboxOption = z.infer<typeof CheckboxOptionSchema>;
 
 export const FieldDefSchema = z.object({
   /** Key looked up in the payload. For `fileUpload`, the value is a local file path. */
@@ -37,6 +46,8 @@ export const FieldDefSchema = z.object({
   optional: z.boolean().optional(),
   /** When true (richText/bulletText only), pasted URLs become highlighted link elements. */
   autolink: z.boolean().optional(),
+  /** Option catalog for `checkboxes` fields (captured from the modal by `extract`). */
+  options: z.array(CheckboxOptionSchema).optional(),
 });
 export type FieldDef = z.infer<typeof FieldDefSchema>;
 

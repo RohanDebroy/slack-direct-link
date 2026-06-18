@@ -54,3 +54,36 @@ test("definitionToSource emits a valid, re-importable module", () => {
   // warnings surfaced as comments
   expect(src).toContain("WARNING");
 });
+
+test("viewToDefinition maps checkboxes and captures its options catalog", () => {
+  const v = {
+    blocks: [{
+      block_id: "b", optional: true, label: { text: "Checks" },
+      element: {
+        type: "checkboxes", action_id: "A_c",
+        options: [
+          { text: { type: "plain_text", text: "Done", emoji: true }, value: "done" },
+          { text: { type: "plain_text", text: "Tested", emoji: true }, value: "tested" },
+        ],
+      },
+    }],
+  };
+  const { definition } = viewToDefinition(v, { name: "x", url: "u", channelId: "C1" });
+  const f = definition.pages[0]!.fields[0]!;
+  expect(f.format).toBe("checkboxes");
+  expect(f.options).toEqual([
+    { text: { type: "plain_text", text: "Done", emoji: true }, value: "done" },
+    { text: { type: "plain_text", text: "Tested", emoji: true }, value: "tested" },
+  ]);
+});
+
+test("definitionToSource serializes the checkboxes options catalog", () => {
+  const def = {
+    name: "x",
+    trigger: { url: "u", context: { location: "slash_command", channel_id: "C1" } },
+    pages: [{ fields: [{ key: "checks", actionId: "A_c", format: "checkboxes", optional: true, options: [{ text: { type: "plain_text", text: "Done" }, value: "done" }] }] }],
+  };
+  const src = definitionToSource(def as any, []);
+  expect(src).toContain('format: "checkboxes"');
+  expect(src).toContain('"value":"done"');
+});

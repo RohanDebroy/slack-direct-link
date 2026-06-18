@@ -195,6 +195,7 @@ export default def;
 | `multiConversations` | `multi_conversations_select`                 | string[] of IDs    |
 | `conversation`       | `conversations_select`                       | user/channel ID    |
 | `fileUpload`         | `file_input` (upload + link the file id)     | local file path    |
+| `checkboxes`         | `checkboxes` (option catalog captured by `extract`) | `true` (tick all) or array of option values |
 
 ### Hooks (optional, TS definitions only)
 
@@ -227,6 +228,9 @@ A payload is a flat JSON object keyed by the definition's field `key`s:
 - **Channel override:** a reserved `"_channel": "C…"` key overrides the definition's
   `trigger.context.channel_id` for this run (precedence: `buildContext` hook → `_channel`
   → the definition's static channel).
+- **Checkboxes:** pass `true` to tick all options, or an array of option **values** to tick
+  specific ones; omit (or `false`) to leave unchecked (the field is left out of the submit). The
+  option catalog is captured automatically by `extract`.
 - Omitted `optional` fields are simply skipped.
 
 ## Dry-run
