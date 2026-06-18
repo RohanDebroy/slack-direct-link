@@ -9,7 +9,7 @@ export class InvalidWorkflowError extends Error {}
 // loader.ts lives at packages/cli/src/workflow/ -> repo root is four levels up.
 const DEFAULT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../workflows");
 
-function assertValid(def: unknown, name: string): asserts def is WorkflowDefinition {
+export function assertValidDefinition(def: unknown, name: string): asserts def is WorkflowDefinition {
   const d = def as Partial<WorkflowDefinition> | undefined;
   if (!d || typeof d !== "object") throw new InvalidWorkflowError(`workflow "${name}" has no default export object`);
   if (typeof d.name !== "string") throw new InvalidWorkflowError(`workflow "${name}" missing string "name"`);
@@ -33,6 +33,6 @@ export async function loadWorkflow(name: string, dir: string = DEFAULT_DIR): Pro
   const file = resolve(dir, `${name}.ts`);
   if (!existsSync(file)) throw new WorkflowNotFoundError(`no workflow "${name}" at ${file}`);
   const mod = (await import(file)) as { default?: unknown };
-  assertValid(mod.default, name);
+  assertValidDefinition(mod.default, name);
   return mod.default;
 }

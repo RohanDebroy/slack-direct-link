@@ -3,6 +3,7 @@ import { launchCommand } from "./commands/launch.ts";
 import { restartCommand } from "./commands/restart.ts";
 import { extractCommand } from "./commands/extract.ts";
 import { triggerCommand } from "./commands/trigger.ts";
+import { runCommand } from "./commands/run.ts";
 
 export function run(argv: string[]): void {
   const program = new Command()
@@ -41,6 +42,17 @@ export function run(argv: string[]): void {
     .option("-p, --port <port>", "CDP debug port", "9222")
     .option("--dry-run", "validate and print the resolved payload without calling Slack")
     .action((name, opts) => triggerCommand(name, opts));
+
+  program
+    .command("run")
+    .description("Trigger a workflow passed inline as JSON (definition + values supplied at runtime, not from workflows/)")
+    .option("--workflow <json>", "inline workflow definition JSON")
+    .option("--workflow-file <path>", "path to a workflow definition JSON file")
+    .option("--payload <json>", "inline JSON payload")
+    .option("--payload-file <path>", "path to a JSON payload file")
+    .option("-p, --port <port>", "CDP debug port", "9222")
+    .option("--dry-run", "validate and print the resolved payload without calling Slack")
+    .action((opts) => runCommand(opts));
 
   program.parseAsync(argv).catch((err) => {
     console.error(err.message ?? String(err));

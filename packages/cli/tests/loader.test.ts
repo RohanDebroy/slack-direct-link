@@ -24,3 +24,18 @@ test("loads the real share-extension-v2 workflow", async () => {
   expect(def.pages.length).toBeGreaterThan(0);
   expect(def.pages[0]!.fields.some((f) => f.format === "fileUpload")).toBe(true);
 });
+
+import { assertValidDefinition } from "../src/workflow/loader.ts";
+
+test("assertValidDefinition rejects a malformed inline definition", () => {
+  expect(() => assertValidDefinition({ name: "x", trigger: { url: "u" } }, "inline")).toThrow(InvalidWorkflowError);
+});
+
+test("assertValidDefinition accepts a well-formed inline definition", () => {
+  const good = {
+    name: "x",
+    trigger: { url: "u", context: { location: "slash_command", channel_id: "C1" } },
+    pages: [{ fields: [{ key: "k", actionId: "A", format: "plain" }] }],
+  };
+  expect(() => assertValidDefinition(good, "inline")).not.toThrow();
+});
