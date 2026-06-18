@@ -2,6 +2,7 @@
   "name": "slack-workflow-trigger",
   "private": true,
   "type": "module",
+  "author": "Rohan Debroy (https://github.com/rohandebroy)",
   "workspaces": ["packages/*"],
   "scripts": {
     "build": "node scripts/build.mjs",

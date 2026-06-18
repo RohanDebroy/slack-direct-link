@@ -2,6 +2,7 @@
   "name": "@slack-automate/cli",
   "private": true,
   "type": "module",
+  "author": "Rohan Debroy (https://github.com/rohandebroy)",
   "bin": { "slack-cli": "./bin/slack-cli" },
   "dependencies": {
     "@slack-automate/core": "workspace:*",

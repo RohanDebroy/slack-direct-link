@@ -8,10 +8,14 @@ import { runCommand } from "./commands/run.ts";
 import { listCommand } from "./commands/list.ts";
 
 export function run(argv: string[]): void {
+  const AUTHOR = "Rohan Debroy";
+  const AUTHOR_URL = "https://github.com/rohandebroy";
+
   const program = new Command()
     .name("slack-cli")
     .description("Trigger repo-defined Slack workflows via the logged-in desktop app (CDP)")
-    .version("0.0.0");
+    .version(`0.0.0\nby ${AUTHOR} · ${AUTHOR_URL}`)
+    .addHelpText("afterAll", `\nMade by ${AUTHOR} · ${AUTHOR_URL}`);
 
   program
     .command("launch")
