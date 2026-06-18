@@ -39,6 +39,7 @@ bun packages/cli/bin/slack-cli trigger <name> --payload-file ./payload.json
 
 | Command | Use |
 |---|---|
+| `ensure-debug` | start Slack in debug mode only if it isn't already (no-op when already set up) |
 | `restart` / `launch` | get Slack running with `--remote-debugging-port=9222` |
 | `list [--json]` | list all workflows in `workflows/` with metadata (name, channel, trigger, field count) |
 | `trigger <name> --payload\|--payload-file [--dry-run]` | run a workflow defined in `workflows/<name>.ts` |

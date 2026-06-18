@@ -88,11 +88,16 @@ slack-cli trigger share-extension-v2 --payload-file ./payload.json
 Get Slack running with the CDP debug port (default `9222`) enabled.
 
 ```bash
+slack-cli ensure-debug           # start Slack in debug mode ONLY if it isn't already (recommended)
 slack-cli launch                 # spawn Slack with --remote-debugging-port=9222
 slack-cli restart                # quit a running Slack first, then relaunch (use this if
                                  # Slack is already open — a second launch won't add the flag)
 slack-cli restart -p 9333        # custom port
 ```
+
+`ensure-debug` is the safe default: it checks the CDP port and only restarts Slack if it
+isn't already in debug mode (so it won't disrupt a session that's already set up), then
+waits until the port is ready.
 
 Verify it's live: open `http://localhost:9222/json` — you should see an `app.slack.com` target.
 
