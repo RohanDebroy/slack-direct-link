@@ -64,3 +64,9 @@ test("listWorkflows summarizes valid workflows and reports invalid ones", async 
   expect(good!.triggerUrl).toBe("https://slack/x");
   expect(errors.some((e) => e.file === "bad-workflow.ts")).toBe(true);
 });
+
+test("loadWorkflow loads a compiled .mjs workflow (extension-agnostic, for bundled builds)", async () => {
+  const def = await loadWorkflow("js-workflow", FIX);
+  expect(def.name).toBe("js-workflow");
+  expect(def.pages[0]!.fields[0]!.key).toBe("title");
+});

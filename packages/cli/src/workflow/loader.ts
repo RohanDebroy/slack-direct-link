@@ -1,14 +1,27 @@
 import { existsSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { WorkflowDefinitionSchema } from "./definition.ts";
 import type { WorkflowDefinition } from "./definition.ts";
 
 export class WorkflowNotFoundError extends Error {}
 export class InvalidWorkflowError extends Error {}
 
-// loader.ts lives at packages/cli/src/workflow/ -> repo root is four levels up.
-const DEFAULT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../workflows");
+const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
+/** Extensions a workflow module may have: .ts in dev (bun), .mjs/.js/.cjs in a bundled build. */
+const WORKFLOW_EXTS = [".ts", ".mjs", ".js", ".cjs"];
+
+// Resolve the workflows dir: env override, then a sibling dir (bundled dist/workflows),
+// then repo-root/workflows (dev, four levels up from packages/cli/src/workflow/).
+function defaultWorkflowsDir(): string {
+  const candidates = [
+    process.env.SLACK_CLI_WORKFLOWS_DIR,
+    resolve(MODULE_DIR, "workflows"),
+    resolve(MODULE_DIR, "../../../../workflows"),
+  ].filter((d): d is string => typeof d === "string");
+  return candidates.find((d) => existsSync(d)) ?? candidates[candidates.length - 1]!;
+}
+const DEFAULT_DIR = defaultWorkflowsDir();
 
 export function assertValidDefinition(def: unknown, name: string): asserts def is WorkflowDefinition {
   const result = WorkflowDefinitionSchema.safeParse(def);
@@ -21,11 +34,15 @@ export function assertValidDefinition(def: unknown, name: string): asserts def i
 }
 
 export async function loadWorkflow(name: string, dir: string = DEFAULT_DIR): Promise<WorkflowDefinition> {
-  const file = resolve(dir, `${name}.ts`);
-  if (!existsSync(file)) throw new WorkflowNotFoundError(`no workflow "${name}" at ${file}`);
-  const mod = (await import(file)) as { default?: unknown };
-  assertValidDefinition(mod.default, name);
-  return mod.default;
+  for (const ext of WORKFLOW_EXTS) {
+    const file = resolve(dir, `${name}${ext}`);
+    if (existsSync(file)) {
+      const mod = (await import(pathToFileURL(file).href)) as { default?: unknown };
+      assertValidDefinition(mod.default, name);
+      return mod.default;
+    }
+  }
+  throw new WorkflowNotFoundError(`no workflow "${name}" in ${dir} (tried ${WORKFLOW_EXTS.join(", ")})`);
 }
 
 export interface WorkflowSummary {
@@ -49,12 +66,15 @@ export async function listWorkflows(
   const errors: { file: string; error: string }[] = [];
   let files: string[] = [];
   try {
-    files = readdirSync(dir).filter((f) => f.endsWith(".ts"));
+    files = readdirSync(dir).filter((f) => WORKFLOW_EXTS.some((e) => f.endsWith(e)));
   } catch {
     return { workflows, errors };
   }
+  const seen = new Set<string>();
   for (const file of files.sort()) {
-    const name = file.replace(/\.ts$/, "");
+    const name = file.replace(/\.(ts|mjs|js|cjs)$/, "");
+    if (seen.has(name)) continue;
+    seen.add(name);
     try {
       const def = await loadWorkflow(name, dir);
       const fieldKeys = def.pages.flatMap((p) => p.fields.map((f) => f.key));

@@ -4,11 +4,13 @@
   "type": "module",
   "workspaces": ["packages/*"],
   "scripts": {
+    "build": "node scripts/build.mjs",
     "typecheck": "tsc -b --noEmit",
     "test": "bun test"
   },
   "devDependencies": {
     "@types/bun": "^1.1.0",
+    "esbuild": "0.28.1",
     "typescript": "^5.5.0"
   }
 }

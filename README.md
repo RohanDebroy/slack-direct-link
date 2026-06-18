@@ -49,6 +49,24 @@ bun link --cwd packages/cli      # then: slack-cli <command>
 
 The examples below use `slack-cli` for brevity.
 
+## Build (run without Bun)
+
+The CLI also bundles to plain JavaScript that runs on any Node ≥ 18 — no Bun, no
+experimental flags:
+
+```bash
+bun install            # or: npm install   (installs esbuild, a dev dependency)
+bun run build          # or: npm run build / node scripts/build.mjs
+node dist/slack-cli.mjs list
+node dist/slack-cli.mjs trigger <name> --payload-file ./payload.json
+```
+
+`build` produces a self-contained `dist/slack-cli.mjs` (all deps bundled) plus
+`dist/workflows/*.mjs` (each `workflows/*.ts` compiled). The loader imports the
+compiled `.mjs` at runtime, so **re-run `build` after adding or editing a workflow**.
+Point `SLACK_CLI_WORKFLOWS_DIR` at another directory to load workflows from elsewhere.
+(Dev still runs straight from source under Bun via `bun packages/cli/bin/slack-cli`.)
+
 ## Quick start
 
 ```bash
