@@ -158,6 +158,8 @@ export default def;
 ```
 
 - An optional top-level **`description`** string is surfaced by `slack-cli list`.
+- **`autolink: true`** on a `richText`/`bulletText` field turns any pasted URL in the value
+  into a highlighted, clickable link element (Slack's paste behaviour). Ignored by other formats.
 - **`actionId`** values are baked into the Slack workflow and stay stable across runs.
   (Per-view `block_id`s change every time and are resolved live — never hardcode them.)
 - A field is **required** unless marked `optional: true`.

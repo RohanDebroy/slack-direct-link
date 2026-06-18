@@ -36,21 +36,47 @@ const link = (url: string) => ({
   },
 });
 
-const richText = (text: string) => ({
+type RichEl = { type: "text"; text: string } | { type: "link"; url: string };
+
+const URL_RE = /https?:\/\/\S+/g;
+const TRAILING_PUNCT = /[.,;:!?]+$/;
+
+/** Split free text into text + link elements, mirroring Slack's paste auto-linkify. */
+function linkifyElements(text: string): RichEl[] {
+  const out: RichEl[] = [];
+  let last = 0;
+  for (const m of text.matchAll(URL_RE)) {
+    const start = m.index ?? 0;
+    let url = m[0];
+    const trail = url.match(TRAILING_PUNCT)?.[0] ?? "";
+    if (trail) url = url.slice(0, url.length - trail.length);
+    if (start > last) out.push({ type: "text", text: text.slice(last, start) });
+    out.push({ type: "link", url });
+    last = start + url.length;
+  }
+  if (last < text.length) out.push({ type: "text", text: text.slice(last) });
+  if (out.length === 0) out.push({ type: "text", text: "" });
+  return out;
+}
+
+const sectionElements = (text: string, autolink: boolean): RichEl[] =>
+  autolink ? linkifyElements(text) : [{ type: "text", text }];
+
+const richText = (text: string, autolink = false) => ({
   type: "rich_text_input" as const,
   rich_text_value: {
     type: "rich_text",
-    elements: [{ type: "rich_text_section", elements: [{ type: "text", text }] }],
+    elements: [{ type: "rich_text_section", elements: sectionElements(text, autolink) }],
   },
 });
 
-const bulletText = (text: string) => ({
+const bulletText = (text: string, autolink = false) => ({
   type: "rich_text_input" as const,
   rich_text_value: {
     type: "rich_text",
     elements: [{
       type: "rich_text_list", style: "bullet", indent: 0, border: 0,
-      elements: [{ type: "rich_text_section", elements: [{ type: "text", text }] }],
+      elements: [{ type: "rich_text_section", elements: sectionElements(text, autolink) }],
     }],
   },
 });
@@ -58,10 +84,10 @@ const bulletText = (text: string) => ({
 function defaultFormat(field: FieldDef, raw: unknown): unknown {
   switch (field.format) {
     case "plain": return plain(String(raw));
-    case "bulletText": return bulletText(String(raw));
+    case "bulletText": return bulletText(String(raw), field.autolink ?? false);
     case "bulletLink": return bulletLink(String(raw));
     case "link": return link(String(raw));
-    case "richText": return richText(String(raw));
+    case "richText": return richText(String(raw), field.autolink ?? false);
     case "multiConversations": return { type: "multi_conversations_select", selected_conversations: raw as string[] };
     case "conversation": return { type: "conversations_select", selected_conversation: String(raw) };
     case "fileUpload": throw new Error(`buildState: fileUpload field "${field.key}" must resolve via uploadedIds`);

@@ -54,6 +54,7 @@ Flat JSON keyed by the definition's field `key`s. Field formats: `plain`, `richT
 - A `fileUpload` field's value is a **local file path** — the CLI uploads it and links the
   file id into the modal's `file_input`.
 - Conversation/user fields take **Slack IDs** (`U…`/`C…`), not names.
+- `autolink: true` on a `richText`/`bulletText` field highlights pasted URLs inside the text.
 - Add `"_channel": "C…"` to override the definition's channel for one run.
 
 ## Gotchas

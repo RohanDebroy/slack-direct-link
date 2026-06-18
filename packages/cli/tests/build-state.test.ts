@@ -111,3 +111,73 @@ test("link formats a URL as a highlighted (clickable) rich_text link element", (
     },
   });
 });
+
+test("autolink on richText splits URLs into link elements (Slack paste behavior)", () => {
+  const blockIds = blockIdMap([{ block_id: "B_n", element: { action_id: "A_n" } }]);
+  const { values } = buildState(
+    { fields: [{ key: "notes", actionId: "A_n", format: "richText", autolink: true }] },
+    { notes: "see https://x.com here" },
+    blockIds,
+    new Map(),
+  );
+  expect(values["B_n"]).toEqual({
+    A_n: {
+      type: "rich_text_input",
+      rich_text_value: {
+        type: "rich_text",
+        elements: [{
+          type: "rich_text_section",
+          elements: [
+            { type: "text", text: "see " },
+            { type: "link", url: "https://x.com" },
+            { type: "text", text: " here" },
+          ],
+        }],
+      },
+    },
+  });
+});
+
+test("autolink trims trailing punctuation out of the URL", () => {
+  const blockIds = blockIdMap([{ block_id: "B_n", element: { action_id: "A_n" } }]);
+  const { values } = buildState(
+    { fields: [{ key: "notes", actionId: "A_n", format: "richText", autolink: true }] },
+    { notes: "done https://x.com/y." },
+    blockIds,
+    new Map(),
+  );
+  const els = (values["B_n"]!.A_n as any).rich_text_value.elements[0].elements;
+  expect(els).toEqual([
+    { type: "text", text: "done " },
+    { type: "link", url: "https://x.com/y" },
+    { type: "text", text: "." },
+  ]);
+});
+
+test("autolink on bulletText linkifies inside the bullet", () => {
+  const blockIds = blockIdMap([{ block_id: "B_c", element: { action_id: "A_c" } }]);
+  const { values } = buildState(
+    { fields: [{ key: "changelog", actionId: "A_c", format: "bulletText", autolink: true }] },
+    { changelog: "fix https://a.b/1" },
+    blockIds,
+    new Map(),
+  );
+  const list = (values["B_c"]!.A_c as any).rich_text_value.elements[0];
+  expect(list.type).toBe("rich_text_list");
+  expect(list.elements[0].elements).toEqual([
+    { type: "text", text: "fix " },
+    { type: "link", url: "https://a.b/1" },
+  ]);
+});
+
+test("autolink with no URL yields a single text element (unchanged shape)", () => {
+  const blockIds = blockIdMap([{ block_id: "B_n", element: { action_id: "A_n" } }]);
+  const { values } = buildState(
+    { fields: [{ key: "notes", actionId: "A_n", format: "richText", autolink: true }] },
+    { notes: "plain note" },
+    blockIds,
+    new Map(),
+  );
+  const els = (values["B_n"]!.A_n as any).rich_text_value.elements[0].elements;
+  expect(els).toEqual([{ type: "text", text: "plain note" }]);
+});

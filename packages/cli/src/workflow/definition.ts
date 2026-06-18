@@ -35,6 +35,8 @@ export const FieldDefSchema = z.object({
   format: FormatSchema,
   /** When true, the field is skipped if the payload omits its key. Default: required. */
   optional: z.boolean().optional(),
+  /** When true (richText/bulletText only), pasted URLs become highlighted link elements. */
+  autolink: z.boolean().optional(),
 });
 export type FieldDef = z.infer<typeof FieldDefSchema>;
 
