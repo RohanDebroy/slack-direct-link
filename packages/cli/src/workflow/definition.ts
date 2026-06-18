@@ -5,6 +5,7 @@ export type Format =
   | "plain"               // plain_text_input
   | "bulletText"          // rich_text_input, single bullet of plain text
   | "bulletLink"          // rich_text_input, single bullet containing a link
+  | "richText"            // rich_text_input, single plain-text section (no bullet)
   | "multiConversations"  // multi_conversations_select (expects string[])
   | "conversation"        // conversations_select (expects string)
   | "fileUpload";         // upload a local file, link the returned id as file_input

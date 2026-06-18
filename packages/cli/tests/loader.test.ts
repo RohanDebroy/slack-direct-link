@@ -18,9 +18,9 @@ test("throws InvalidWorkflowError for malformed definition", async () => {
   await expect(loadWorkflow("bad-workflow", FIX)).rejects.toBeInstanceOf(InvalidWorkflowError);
 });
 
-test("loads the real share-extension sample", async () => {
-  const def = await loadWorkflow("share-extension");
-  expect(def.name).toBe("share-extension");
+test("loads the real share-extension-v2 workflow", async () => {
+  const def = await loadWorkflow("share-extension-v2");
+  expect(def.name).toBe("share-extension-v2");
   expect(def.pages.length).toBeGreaterThan(0);
   expect(def.pages[0]!.fields.some((f) => f.format === "fileUpload")).toBe(true);
 });

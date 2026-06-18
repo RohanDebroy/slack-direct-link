@@ -73,3 +73,22 @@ test("formatValue hook overrides the default formatter", () => {
   );
   expect(values["B_ext"]).toEqual({ A_ext: { type: "custom", k: "extensionVersion", v: "1.2.3" } });
 });
+
+test("richText formats a value as a plain rich_text_input section (no bullet)", () => {
+  const blockIds = blockIdMap([{ block_id: "B_jira", element: { action_id: "A_jira" } }]);
+  const { values } = buildState(
+    { fields: [{ key: "jiraLink", actionId: "A_jira", format: "richText" }] },
+    { jiraLink: "https://jira/X-1" },
+    blockIds,
+    new Map(),
+  );
+  expect(values["B_jira"]).toEqual({
+    A_jira: {
+      type: "rich_text_input",
+      rich_text_value: {
+        type: "rich_text",
+        elements: [{ type: "rich_text_section", elements: [{ type: "text", text: "https://jira/X-1" }] }],
+      },
+    },
+  });
+});

@@ -4,7 +4,7 @@ import type { WorkflowDefinition, Format } from "./definition.ts";
 export class PayloadValidationError extends Error {}
 
 const VALID_FORMATS: ReadonlySet<Format> = new Set<Format>([
-  "plain", "bulletText", "bulletLink", "multiConversations", "conversation", "fileUpload",
+  "plain", "bulletText", "bulletLink", "richText", "multiConversations", "conversation", "fileUpload",
 ]);
 
 export function validatePayload(
