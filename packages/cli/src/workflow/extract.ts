@@ -1,4 +1,5 @@
-import type { WorkflowDefinition, FieldDef, Format, ShortcutTrigger } from "./definition.ts";
+import type { WorkflowDefinition, FieldDef, Format, ShortcutTrigger, TriggerDef } from "./definition.ts";
+import { isReactionTrigger } from "./definition.ts";
 
 /** Loose shape of a view_opened modal's input blocks. */
 interface ViewInputBlock {
@@ -19,6 +20,12 @@ export interface ExtractMeta {
   channelId: string;
   /** Trigger location; matches the Slack web client default for shortcuts. */
   location?: string;
+  /**
+   * When set, emit a reaction trigger instead of a shortcut trigger. The url is still
+   * used only to trip the modal so its fields can be captured; the generated file's
+   * trigger becomes { kind: "reaction", emoji, appId }.
+   */
+  reaction?: { emoji: string; appId: string };
 }
 
 export interface ExtractResult {
@@ -96,11 +103,10 @@ export function viewToDefinition(view: ExtractableView, meta: ExtractMeta): Extr
     }
   }
 
-  const definition: WorkflowDefinition = {
-    name: meta.name,
-    trigger: { url: meta.url, context: { location: meta.location ?? "slash_command", channel_id: meta.channelId } },
-    pages: [{ fields }],
-  };
+  const trigger: TriggerDef = meta.reaction
+    ? { kind: "reaction", emoji: meta.reaction.emoji, appId: meta.reaction.appId }
+    : { url: meta.url, context: { location: meta.location ?? "slash_command", channel_id: meta.channelId } };
+  const definition: WorkflowDefinition = { name: meta.name, trigger, pages: [{ fields }] };
   return { definition, warnings };
 }
 
@@ -132,14 +138,19 @@ export function definitionToSource(
     : "";
   const decl = typescript ? "const def: WorkflowDefinition = {" : "const def = {";
 
-  const shortcutTrigger = def.trigger as ShortcutTrigger;
+  const triggerBlock = isReactionTrigger(def.trigger)
+    ? `  trigger: { kind: "reaction", emoji: ${JSON.stringify(def.trigger.emoji)}, appId: ${JSON.stringify(def.trigger.appId)} },`
+    : (() => {
+        const s = def.trigger as ShortcutTrigger;
+        return `  trigger: {
+    url: ${JSON.stringify(s.url)},
+    context: { location: ${JSON.stringify(s.context.location)}, channel_id: ${JSON.stringify(s.context.channel_id)} },
+  },`;
+      })();
   return `${header}// Auto-extracted by \`slack-cli extract\`. Review before triggering for real.
 ${warningBlock}${decl}
   name: ${JSON.stringify(def.name)},
-  trigger: {
-    url: ${JSON.stringify(shortcutTrigger.url)},
-    context: { location: ${JSON.stringify(shortcutTrigger.context.location)}, channel_id: ${JSON.stringify(shortcutTrigger.context.channel_id)} },
-  },
+${triggerBlock}
   pages: [
     {
       fields: [

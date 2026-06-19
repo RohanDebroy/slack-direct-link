@@ -99,3 +99,29 @@ test("definitionToSource emits plain ESM (no type import/annotation) when typesc
   expect(src).toContain("const def = {");
   expect(src).toContain("export default def");
 });
+
+test("viewToDefinition emits a reaction trigger when meta.reaction is set", () => {
+  const { definition } = viewToDefinition(view, {
+    name: "share-extension-x",
+    url: "https://slack.com/shortcuts/Ft1/abc",
+    channelId: "C123",
+    reaction: { emoji: "accessibility", appId: "A092KLW9XXX" },
+  });
+  expect(definition.trigger).toEqual({ kind: "reaction", emoji: "accessibility", appId: "A092KLW9XXX" });
+  // fields are still captured from the tripped modal, exactly as in shortcut mode
+  expect(definition.pages[0]!.fields.find((f) => f.key === "extensionVersion")).toEqual({ key: "extensionVersion", actionId: "A_ext", format: "plain" });
+});
+
+test("definitionToSource emits a reaction trigger block (no url/context)", () => {
+  const def = {
+    name: "x",
+    trigger: { kind: "reaction", emoji: "accessibility", appId: "A092KLW9XXX" },
+    pages: [{ fields: [{ key: "t", actionId: "A1", format: "plain" }] }],
+  };
+  const src = definitionToSource(def as any, []);
+  expect(src).toContain('kind: "reaction"');
+  expect(src).toContain('emoji: "accessibility"');
+  expect(src).toContain('appId: "A092KLW9XXX"');
+  expect(src).not.toContain("url:");
+  expect(src).not.toContain("context:");
+});
