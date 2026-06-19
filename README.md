@@ -202,7 +202,7 @@ export default def;
 | `link`               | `rich_text_input` (inline clickable link)    | URL string         |
 | `multiConversations` | `multi_conversations_select`                 | string[] of IDs    |
 | `conversation`       | `conversations_select`                       | user/channel ID    |
-| `fileUpload`         | `file_input` (upload + link the file id)     | local file path    |
+| `fileUpload`         | `file_input` (upload + link the file id(s))  | local file path, or an array of paths |
 | `checkboxes`         | `checkboxes` (option catalog captured by `extract`) | `true` (tick all) or array of option values |
 
 ### Hooks (optional, TS definitions only)
@@ -231,8 +231,9 @@ A payload is a flat JSON object keyed by the definition's field `key`s:
 }
 ```
 
-- **File uploads:** a `fileUpload` field's value is a **local file path**. The CLI runs
-  Slack's 3-step upload and links the returned file id into the modal's `file_input`.
+- **File uploads:** a `fileUpload` field's value is a **local file path**, or an **array of
+  paths** for a multi-file `file_input` (Slack workflow file inputs accept multiple files). The
+  CLI uploads each and links all returned file ids into the modal's `file_input`.
 - **Channel override:** a reserved `"_channel": "C…"` key overrides the definition's
   `trigger.context.channel_id` for this run (precedence: `buildContext` hook → `_channel`
   → the definition's static channel).

@@ -23,11 +23,12 @@ export function validatePayload(
         throw new PayloadValidationError(`missing required payload key "${field.key}" (page ${p})`);
       }
       if (field.format === "fileUpload") {
-        if (typeof raw !== "string") {
-          throw new PayloadValidationError(`fileUpload field "${field.key}" must be a local file path string`);
+        const paths = typeof raw === "string" ? [raw] : Array.isArray(raw) ? raw : null;
+        if (!paths || paths.some((p) => typeof p !== "string")) {
+          throw new PayloadValidationError(`fileUpload field "${field.key}" must be a local file path string or an array of paths`);
         }
-        if (!fileExists(raw)) {
-          throw new PayloadValidationError(`file not found for field "${field.key}": ${raw}`);
+        for (const p of paths as string[]) {
+          if (!fileExists(p)) throw new PayloadValidationError(`file not found for field "${field.key}": ${p}`);
         }
       }
     }

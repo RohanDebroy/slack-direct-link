@@ -103,7 +103,7 @@ export function buildState(
   page: PageDef,
   payload: Record<string, unknown>,
   blockIds: Map<string, string>,
-  uploadedIds: Map<string, string>,
+  uploadedIds: Map<string, string[]>,
   hooks?: Pick<WorkflowDefinition, "formatValue">,
 ): { values: Record<string, Record<string, unknown>> } {
   const values: Record<string, Record<string, unknown>> = {};
@@ -115,12 +115,12 @@ export function buildState(
 
   for (const field of page.fields) {
     if (field.format === "fileUpload") {
-      const id = uploadedIds.get(field.key);
-      if (id === undefined) {
+      const ids = uploadedIds.get(field.key);
+      if (ids === undefined || ids.length === 0) {
         if (field.optional) continue;
         throw new Error(`buildState: no uploaded file id for required field "${field.key}"`);
       }
-      put(field.actionId, { type: "file_input", files: [{ id }] });
+      put(field.actionId, { type: "file_input", files: ids.map((id) => ({ id })) });
       continue;
     }
     if (field.format === "checkboxes") {

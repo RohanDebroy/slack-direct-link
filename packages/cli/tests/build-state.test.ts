@@ -31,7 +31,7 @@ test("blockIdMap maps action_id -> block_id", () => {
 
 test("buildState formats each field and links the uploaded file id", () => {
   const blockIds = blockIdMap(blocks);
-  const uploaded = new Map([["attachment", "F123"]]);
+  const uploaded = new Map([["attachment", ["F123"]]]);
   const { values } = buildState(
     page,
     { extensionVersion: "1.2.3", jiraLink: "https://j", changelog: "did stuff", whomToTag: ["U1", "U2"], reviewedBy: "U9" },
@@ -51,14 +51,14 @@ test("buildState formats each field and links the uploaded file id", () => {
 test("buildState throws when a required field's payload value is missing", () => {
   const blockIds = blockIdMap(blocks);
   expect(() =>
-    buildState(page, { jiraLink: "https://j", changelog: "c", whomToTag: ["U1"], reviewedBy: "U9" }, blockIds, new Map([["attachment", "F1"]])),
+    buildState(page, { jiraLink: "https://j", changelog: "c", whomToTag: ["U1"], reviewedBy: "U9" }, blockIds, new Map([["attachment", ["F1"]]])),
   ).toThrow(/missing required field "extensionVersion"/);
 });
 
 test("buildState throws when the view lacks a needed action_id", () => {
   const blockIds = blockIdMap(blocks.filter((b) => b.element.action_id !== "A_ext"));
   expect(() =>
-    buildState(page, { extensionVersion: "1.2.3", jiraLink: "https://j", changelog: "c", whomToTag: ["U1"], reviewedBy: "U9" }, blockIds, new Map([["attachment", "F1"]])),
+    buildState(page, { extensionVersion: "1.2.3", jiraLink: "https://j", changelog: "c", whomToTag: ["U1"], reviewedBy: "U9" }, blockIds, new Map([["attachment", ["F1"]]])),
   ).toThrow(/no block_id in view for action_id A_ext/);
 });
 
@@ -207,4 +207,15 @@ test("checkboxes: omitted or false is left unchecked (field absent from submit)"
 test("checkboxes: truthy payload with no options catalog throws (needs re-extract)", () => {
   const page = { fields: [{ key: "checks", actionId: "A_c", format: "checkboxes" as const }] };
   expect(() => buildState(page, { checks: true }, checkboxBlocks, new Map())).toThrow(/options catalog/);
+});
+
+test("fileUpload links multiple uploaded file ids into one file_input", () => {
+  const blockIds = blockIdMap([{ block_id: "B_f", element: { action_id: "A_f" } }]);
+  const { values } = buildState(
+    { fields: [{ key: "zips", actionId: "A_f", format: "fileUpload" }] },
+    { zips: ["./a.zip", "./b.zip"] },
+    blockIds,
+    new Map([["zips", ["F1", "F2"]]]),
+  );
+  expect(values["B_f"]).toEqual({ A_f: { type: "file_input", files: [{ id: "F1" }, { id: "F2" }] } });
 });

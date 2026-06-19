@@ -52,8 +52,8 @@ Flat JSON keyed by the definition's field `key`s. Field formats: `plain`, `richT
 `link` (clickable URL), `bulletText`, `bulletLink`, `multiConversations` (ID array),
 `conversation` (one ID), `fileUpload`, `checkboxes`.
 
-- A `fileUpload` field's value is a **local file path** — the CLI uploads it and links the
-  file id into the modal's `file_input`.
+- A `fileUpload` field's value is a **local file path**, or an **array of paths** for a
+  multi-file `file_input` — the CLI uploads each and links all the file ids.
 - Conversation/user fields take **Slack IDs** (`U…`/`C…`), not names.
 - `autolink: true` on a `richText`/`bulletText` field highlights pasted URLs inside the text.
 - `checkboxes`: pass `true` (tick all) or an array of option values; omit = unchecked. `extract` captures the option catalog.

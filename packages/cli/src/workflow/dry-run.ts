@@ -11,7 +11,8 @@ export function printDryRun(def: WorkflowDefinition, payload: Record<string, unk
     for (const f of page.fields) {
       const present = payload[f.key] !== undefined;
       if (!present && f.optional) continue;
-      const note = f.format === "fileUpload" ? ` (upload local file: ${String(payload[f.key])})` : "";
+      const v = payload[f.key];
+      const note = f.format === "fileUpload" ? ` (upload: ${Array.isArray(v) ? v.join(", ") : String(v)})` : "";
       console.log(`[dry-run]   ${f.key} [${f.format}] = ${JSON.stringify(payload[f.key])}${note}`);
     }
   });

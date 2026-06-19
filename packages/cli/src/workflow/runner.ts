@@ -80,15 +80,21 @@ export async function runWorkflow(input: RunInput): Promise<RunOutput> {
     const page = def.pages[p]!;
     const blockIds = blockIdMap(view.view?.blocks);
 
-    // Upload any fileUpload fields present on this page, keyed by field.key.
-    const uploadedIds = new Map<string, string>();
+    // Upload any fileUpload fields present on this page, keyed by field.key. A field may
+    // carry one path or an array of paths (Slack file_input accepts multiple files).
+    const uploadedIds = new Map<string, string[]>();
     for (const field of page.fields) {
       if (field.format !== "fileUpload") continue;
-      const path = payload[field.key];
-      if (typeof path !== "string") continue; // optional + omitted (validated earlier otherwise)
-      const bytes = await readFile(path);
-      const uploaded = await d.uploadFile(session, { bytes, filename: basename(path) });
-      uploadedIds.set(field.key, uploaded.id);
+      const val = payload[field.key];
+      const paths = typeof val === "string" ? [val] : Array.isArray(val) ? val.filter((p): p is string => typeof p === "string") : [];
+      if (paths.length === 0) continue; // optional + omitted (validated earlier otherwise)
+      const ids: string[] = [];
+      for (const path of paths) {
+        const bytes = await readFile(path);
+        const uploaded = await d.uploadFile(session, { bytes, filename: basename(path) });
+        ids.push(uploaded.id);
+      }
+      uploadedIds.set(field.key, ids);
     }
 
     const state = buildState(page, payload, blockIds, uploadedIds, def);

@@ -115,3 +115,19 @@ test("buildContext hook overrides trigger context", async () => {
   });
   expect(seenCtx).toEqual({ location: "slash_command", channel_id: "C999" });
 });
+
+test("single-page workflow uploads multiple files into one file_input field", async () => {
+  const views = [viewEvent("v1", ["A1", "A2"], "ct")];
+  const { deps, submits } = makeDeps(views, [""]);
+  await runWorkflow({
+    def: onePage,
+    payload: { title: "hello", attachment: ["/tmp/a.zip", "/tmp/b.zip"] },
+    session: {} as any,
+    stream: {} as any,
+    readFile: async () => new Uint8Array([1]),
+    deps: deps as any,
+  });
+  expect(submits[0].state.values["B_A2"]).toEqual({
+    A2: { type: "file_input", files: [{ id: "F_a.zip" }, { id: "F_b.zip" }] },
+  });
+});
