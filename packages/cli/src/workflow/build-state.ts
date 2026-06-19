@@ -99,6 +99,18 @@ function defaultFormat(field: FieldDef, raw: unknown): unknown {
   }
 }
 
+const EMPTY_INPUT_TYPE: Record<FieldDef["format"], string> = {
+  plain: "plain_text_input",
+  richText: "rich_text_input",
+  bulletText: "rich_text_input",
+  bulletLink: "rich_text_input",
+  link: "rich_text_input",
+  multiConversations: "multi_conversations_select",
+  conversation: "conversations_select",
+  fileUpload: "file_input",
+  checkboxes: "checkboxes",
+};
+
 export function buildState(
   page: PageDef,
   payload: Record<string, unknown>,
@@ -112,12 +124,19 @@ export function buildState(
     if (!blockId) throw new Error(`buildState: no block_id in view for action_id ${actionId}`);
     values[blockId] = { [actionId]: value };
   };
+  // The Slack client submits every *rendered* input block, present-but-empty when
+  // unfilled. Workflow Builder (hermes_form) maps each block to an output variable, so
+  // an omitted block leaves its variable undefined and breaks downstream steps. Mirror
+  // the client: emit a present-but-empty block, but only if the field is in this view.
+  const putEmpty = (field: FieldDef) => {
+    if (blockIds.has(field.actionId)) put(field.actionId, { type: EMPTY_INPUT_TYPE[field.format] });
+  };
 
   for (const field of page.fields) {
     if (field.format === "fileUpload") {
       const ids = uploadedIds.get(field.key);
       if (ids === undefined || ids.length === 0) {
-        if (field.optional) continue;
+        if (field.optional) { putEmpty(field); continue; }
         throw new Error(`buildState: no uploaded file id for required field "${field.key}"`);
       }
       put(field.actionId, { type: "file_input", files: ids.map((id) => ({ id })) });
@@ -134,14 +153,15 @@ export function buildState(
         if (want && opts.length === 0) {
           throw new Error(`buildState: checkboxes field "${field.key}" has no options catalog (re-run extract)`);
         }
-        continue; // unchecked -> leave the field out of the submit
+        putEmpty(field); // unchecked -> present-but-empty (client mirrors this)
+        continue;
       }
       put(field.actionId, { type: "checkboxes", selected_options: selected });
       continue;
     }
     const raw = payload[field.key];
     if (raw === undefined) {
-      if (field.optional) continue;
+      if (field.optional) { putEmpty(field); continue; }
       throw new Error(`buildState: missing required field "${field.key}"`);
     }
     const value = hooks?.formatValue?.(field, raw) ?? defaultFormat(field, raw);
