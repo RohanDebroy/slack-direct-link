@@ -1,6 +1,7 @@
 export { attach, NoSlackTargetError, CdpUnreachableError } from "./cdp/connect.ts";
 export type { Session, ConnectOptions } from "./cdp/types.ts";
 export { triggersTrip } from "./api/workflows.ts";
+export { reactionsAdd } from "./api/reactions.ts";
 export { viewsGet, viewsSubmit } from "./api/views.ts";
 export type { ViewsSubmitResponse } from "./api/views.ts";
 export { uploadFile } from "./api/files.ts";
