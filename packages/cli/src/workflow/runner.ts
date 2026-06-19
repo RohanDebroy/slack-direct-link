@@ -48,53 +48,36 @@ export function resolveContext(def: WorkflowDefinition, payload: Record<string, 
   return def.trigger.context;
 }
 
-export async function runWorkflow(input: RunInput): Promise<RunOutput> {
-  const d = input.deps ?? DEFAULT_DEPS;
-  const readFile = input.readFile ?? (async (p: string) => new Uint8Array(await fsReadFile(p)));
-  const timeout = input.timeoutMs ?? 15_000;
-  const { def, payload, session, stream } = input;
+interface FillPagesInput {
+  def: WorkflowDefinition;
+  payload: Record<string, unknown>;
+  session: Session;
+  stream: EventStream;
+  firstView: ViewOpened;
+  readFile: (path: string) => Promise<Uint8Array>;
+  deps: RunDeps;
+  timeout: number;
+}
 
-  // Subscribe to the FIRST view_opened (matched by client_token) BEFORE firing the
-  // trip — the WSS frame can arrive before the HTTP response, so subscribing after
-  // would race. waitFor subscribes synchronously when called.
-  const client_token = `web-${Date.now()}`;
-  let viewPromise: Promise<ViewOpened> = d.waitFor(
-    stream,
-    (e: SlackEvent): e is ViewOpened => e.type === "view_opened" && e.client_token === client_token,
-    { timeout },
-  );
-
-  const shortcutTrigger = def.trigger as ShortcutTrigger;
-  const trip = await d.triggersTrip(session, {
-    url: shortcutTrigger.url,
-    context: resolveContext(def, payload),
-    run_precheck: true,
-    client_token,
-  });
-
+/** Fill and submit each modal page, starting from an already-opened first view. Returns pages submitted. */
+async function fillPages(i: FillPagesInput): Promise<number> {
+  const { def, payload, session, stream, readFile, deps, timeout } = i;
+  let view = i.firstView;
   let pagesSubmitted = 0;
   for (let p = 0; p < def.pages.length; p++) {
-    let view: ViewOpened;
-    try {
-      view = await viewPromise;
-    } catch (err) {
-      throw new Error(`runWorkflow: page ${p} view never opened (${(err as Error).message})`);
-    }
     const page = def.pages[p]!;
     const blockIds = blockIdMap(view.view?.blocks);
 
-    // Upload any fileUpload fields present on this page, keyed by field.key. A field may
-    // carry one path or an array of paths (Slack file_input accepts multiple files).
     const uploadedIds = new Map<string, string[]>();
     for (const field of page.fields) {
       if (field.format !== "fileUpload") continue;
       const val = payload[field.key];
       const paths = typeof val === "string" ? [val] : Array.isArray(val) ? val.filter((p): p is string => typeof p === "string") : [];
-      if (paths.length === 0) continue; // optional + omitted (validated earlier otherwise)
+      if (paths.length === 0) continue;
       const ids: string[] = [];
       for (const path of paths) {
         const bytes = await readFile(path);
-        const uploaded = await d.uploadFile(session, { bytes, filename: basename(path) });
+        const uploaded = await deps.uploadFile(session, { bytes, filename: basename(path) });
         ids.push(uploaded.id);
       }
       uploadedIds.set(field.key, ids);
@@ -102,28 +85,53 @@ export async function runWorkflow(input: RunInput): Promise<RunOutput> {
 
     const state = buildState(page, payload, blockIds, uploadedIds, def);
 
-    // If more pages remain, subscribe to the next view_opened BEFORE submitting,
-    // so the pushed view's frame isn't missed. Swallow it if we end up not advancing.
     const moreToCome = p < def.pages.length - 1;
     const nextPromise: Promise<ViewOpened> | undefined = moreToCome
-      // page 0 matches by client_token; pushed views carry no matching token, so subsequent pages match the next view_opened (sound because we subscribe before submitting).
-      ? d.waitFor(stream, (e: SlackEvent): e is ViewOpened => e.type === "view_opened", { timeout })
+      ? deps.waitFor(stream, (e: SlackEvent): e is ViewOpened => e.type === "view_opened", { timeout })
       : undefined;
 
-    const resp = await d.viewsSubmit(session, { view_id: view.view_id, state });
+    const resp = await deps.viewsSubmit(session, { view_id: view.view_id, state });
     pagesSubmitted++;
 
     const advance = def.shouldContinue
       ? def.shouldContinue(resp)
       : resp.response_action === "push" || resp.response_action === "update";
 
-    if (advance && nextPromise) {
-      viewPromise = nextPromise;
-      continue;
-    }
-    if (nextPromise) void nextPromise.catch(() => {}); // discard unused subscription
+    if (advance && nextPromise) { view = await nextPromise; continue; }
+    if (nextPromise) void nextPromise.catch(() => {});
     break;
   }
+  return pagesSubmitted;
+}
+
+export async function runWorkflow(input: RunInput): Promise<RunOutput> {
+  const d = input.deps ?? DEFAULT_DEPS;
+  const readFile = input.readFile ?? (async (p: string) => new Uint8Array(await fsReadFile(p)));
+  const timeout = input.timeoutMs ?? 15_000;
+  const { def, payload, session, stream } = input;
+
+  const client_token = `web-${Date.now()}`;
+  const viewPromise: Promise<ViewOpened> = d.waitFor(
+    stream,
+    (e: SlackEvent): e is ViewOpened => e.type === "view_opened" && e.client_token === client_token,
+    { timeout },
+  );
+
+  const trip = await d.triggersTrip(session, {
+    url: (def.trigger as { url: string }).url,
+    context: resolveContext(def, payload),
+    run_precheck: true,
+    client_token,
+  });
+
+  let firstView: ViewOpened;
+  try {
+    firstView = await viewPromise;
+  } catch (err) {
+    throw new Error(`runWorkflow: page 0 view never opened (${(err as Error).message})`);
+  }
+
+  const pagesSubmitted = await fillPages({ def, payload, session, stream, firstView, readFile, deps: d, timeout });
 
   return {
     functionExecutionId: trip.function_execution_id,
