@@ -1,12 +1,34 @@
 import { z } from "zod";
 import type { WssFrame } from "../cdp/types.ts";
 
+const ActionEl = z.object({
+  type: z.string().optional(),
+  action_id: z.string().optional(),
+  value: z.string().optional(),
+}).passthrough();
+
+const AttachmentBlock = z.object({
+  type: z.string().optional(),
+  block_id: z.string().optional(),
+  elements: z.array(ActionEl).optional(),
+}).passthrough();
+
+const MessageAttachment = z.object({
+  id: z.number().optional(),
+  blocks: z.array(AttachmentBlock).optional(),
+}).passthrough();
+
 const Message = z.object({
   type: z.literal("message"),
   channel: z.string(),
   user: z.string().optional(),
   text: z.string().optional(),
   ts: z.string(),
+  subtype: z.string().optional(),
+  app_id: z.string().optional(),
+  bot_id: z.string().optional(),
+  team: z.string().optional(),
+  attachments: z.array(MessageAttachment).optional(),
 }).passthrough();
 
 const ViewOpenedBlock = z.object({
