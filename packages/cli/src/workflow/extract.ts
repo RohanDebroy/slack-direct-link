@@ -1,4 +1,4 @@
-import type { WorkflowDefinition, FieldDef, Format } from "./definition.ts";
+import type { WorkflowDefinition, FieldDef, Format, ShortcutTrigger } from "./definition.ts";
 
 /** Loose shape of a view_opened modal's input blocks. */
 interface ViewInputBlock {
@@ -132,12 +132,13 @@ export function definitionToSource(
     : "";
   const decl = typescript ? "const def: WorkflowDefinition = {" : "const def = {";
 
+  const shortcutTrigger = def.trigger as ShortcutTrigger;
   return `${header}// Auto-extracted by \`slack-cli extract\`. Review before triggering for real.
 ${warningBlock}${decl}
   name: ${JSON.stringify(def.name)},
   trigger: {
-    url: ${JSON.stringify(def.trigger.url)},
-    context: { location: ${JSON.stringify(def.trigger.context.location)}, channel_id: ${JSON.stringify(def.trigger.context.channel_id)} },
+    url: ${JSON.stringify(shortcutTrigger.url)},
+    context: { location: ${JSON.stringify(shortcutTrigger.context.location)}, channel_id: ${JSON.stringify(shortcutTrigger.context.channel_id)} },
   },
   pages: [
     {
