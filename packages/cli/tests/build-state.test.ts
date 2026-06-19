@@ -199,9 +199,30 @@ test("checkboxes: payload array selects the matching options by value", () => {
   expect(values["B_c"]).toEqual({ A_c: { type: "checkboxes", selected_options: [checkboxOpts[1]] } });
 });
 
-test("checkboxes: omitted or false is left unchecked (field absent from submit)", () => {
-  expect(buildState(checkboxPage, {}, checkboxBlocks, new Map()).values["B_c"]).toBeUndefined();
-  expect(buildState(checkboxPage, { checks: false }, checkboxBlocks, new Map()).values["B_c"]).toBeUndefined();
+test("checkboxes: omitted or false is present-but-empty when the block is in the view", () => {
+  expect(buildState(checkboxPage, {}, checkboxBlocks, new Map()).values["B_c"]).toEqual({ A_c: { type: "checkboxes" } });
+  expect(buildState(checkboxPage, { checks: false }, checkboxBlocks, new Map()).values["B_c"]).toEqual({ A_c: { type: "checkboxes" } });
+});
+
+test("optional field present in the view but unfilled is submitted present-but-empty", () => {
+  // Mirrors the Slack client: a rendered input block is always in state.values, empty if unfilled.
+  const blockIds = blockIdMap([
+    { block_id: "B_txt", element: { action_id: "A_txt" } },
+    { block_id: "B_file2", element: { action_id: "A_file2" } },
+  ]);
+  const optPage = { fields: [
+    { key: "ctx", actionId: "A_txt", format: "plain" as const, optional: true },
+    { key: "snap", actionId: "A_file2", format: "fileUpload" as const, optional: true },
+  ] };
+  const { values } = buildState(optPage, {}, blockIds, new Map());
+  expect(values["B_txt"]).toEqual({ A_txt: { type: "plain_text_input" } });
+  expect(values["B_file2"]).toEqual({ A_file2: { type: "file_input" } });
+});
+
+test("optional field NOT in the view is omitted (block not rendered)", () => {
+  const blockIds = blockIdMap([{ block_id: "B_other", element: { action_id: "A_other" } }]);
+  const optPage = { fields: [{ key: "ctx", actionId: "A_missing", format: "plain" as const, optional: true }] };
+  expect(buildState(optPage, {}, blockIds, new Map()).values["B_missing"]).toBeUndefined();
 });
 
 test("checkboxes: truthy payload with no options catalog throws (needs re-extract)", () => {

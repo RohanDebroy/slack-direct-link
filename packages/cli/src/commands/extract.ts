@@ -13,6 +13,10 @@ export interface ExtractOpts {
   channel: string;
   port?: string;
   out?: string;
+  /** Emit a reaction trigger instead of a shortcut trigger (the url is still tripped to capture the modal). */
+  reaction?: string;
+  /** Workflow bot app id, required when --reaction is given. */
+  appId?: string;
 }
 
 /**
@@ -35,6 +39,9 @@ async function resolveChannelId(session: Session, channel: string): Promise<stri
 }
 
 export async function extractCommand(url: string, opts: ExtractOpts): Promise<void> {
+  if (opts.reaction && !opts.appId) {
+    throw new Error("--reaction requires --app-id (the workflow bot's app id, e.g. A092KLW9XXX)");
+  }
   const session = await attach({ port: Number(opts.port ?? "9222") });
   try {
     const channelId = await resolveChannelId(session, opts.channel);
@@ -63,6 +70,7 @@ export async function extractCommand(url: string, opts: ExtractOpts): Promise<vo
       name: opts.name,
       url,
       channelId,
+      ...(opts.reaction ? { reaction: { emoji: opts.reaction, appId: opts.appId! } } : {}),
     });
 
     // Write into the dir the loader reads from (relative to the CLI, NOT cwd), in a
@@ -72,7 +80,10 @@ export async function extractCommand(url: string, opts: ExtractOpts): Promise<vo
     mkdirSync(dirname(outPath), { recursive: true });
     writeFileSync(outPath, definitionToSource(definition, warnings, { typescript: outPath.endsWith(".ts") }), "utf8");
 
-    console.log(`extracted ${definition.pages[0]!.fields.length} field(s) -> ${outPath} (modal not submitted)`);
+    const triggerNote = opts.reaction
+      ? `reaction :${opts.reaction}: trigger (app ${opts.appId}) — edit _message/_channel at trigger time`
+      : "shortcut trigger";
+    console.log(`extracted ${definition.pages[0]!.fields.length} field(s) -> ${outPath} (${triggerNote}; modal not submitted)`);
     for (const w of warnings) console.log(`  warning: ${w}`);
   } finally {
     await session.close();

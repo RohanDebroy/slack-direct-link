@@ -1,8 +1,8 @@
 import { existsSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { WorkflowDefinitionSchema } from "./definition.ts";
-import type { WorkflowDefinition } from "./definition.ts";
+import { WorkflowDefinitionSchema, isReactionTrigger } from "./definition.ts";
+import type { WorkflowDefinition, ReactionTrigger, ShortcutTrigger } from "./definition.ts";
 
 export class WorkflowNotFoundError extends Error {}
 export class InvalidWorkflowError extends Error {}
@@ -53,8 +53,11 @@ export interface WorkflowSummary {
   /** The definition's declared `name` (usually equal to the basename). */
   declaredName: string;
   description?: string;
-  triggerUrl: string;
-  channelId: string;
+  triggerKind: "shortcut" | "reaction";
+  /** Human-readable trigger: the URL for shortcut, `reaction :emoji: (app …)` for reaction. */
+  triggerLabel: string;
+  /** Shortcut triggers only; absent for reaction triggers. */
+  channelId?: string;
   pages: number;
   fields: number;
   fieldKeys: string[];
@@ -80,12 +83,19 @@ export async function listWorkflows(
     try {
       const def = await loadWorkflow(name, dir);
       const fieldKeys = def.pages.flatMap((p) => p.fields.map((f) => f.key));
+      const trigger = def.trigger;
+      const reaction = isReactionTrigger(trigger);
+      const triggerLabel = reaction
+        ? `reaction :${(trigger as ReactionTrigger).emoji}: (app ${(trigger as ReactionTrigger).appId})`
+        : (trigger as ShortcutTrigger).url;
+      const channelId = reaction ? undefined : (trigger as ShortcutTrigger).context.channel_id;
       workflows.push({
         name,
         declaredName: def.name,
         ...(def.description !== undefined ? { description: def.description } : {}),
-        triggerUrl: def.trigger.url,
-        channelId: def.trigger.context.channel_id,
+        triggerKind: reaction ? "reaction" : "shortcut",
+        triggerLabel,
+        ...(channelId !== undefined ? { channelId } : {}),
         pages: def.pages.length,
         fields: fieldKeys.length,
         fieldKeys,

@@ -1,11 +1,19 @@
 import { resolveContext } from "./runner.ts";
+import { isReactionTrigger } from "./definition.ts";
+import { resolveMessageRef } from "./permalink.ts";
 import type { WorkflowDefinition } from "./definition.ts";
 
-/** Print the resolved trigger context and per-page field values without calling Slack. */
+/** Print the resolved trigger + per-page field values without calling Slack. */
 export function printDryRun(def: WorkflowDefinition, payload: Record<string, unknown>): void {
   console.log(`[dry-run] workflow "${def.name}"`);
-  console.log(`[dry-run] trigger url: ${def.trigger.url}`);
-  console.log(`[dry-run] context: ${JSON.stringify(resolveContext(def, payload))}`);
+  if (isReactionTrigger(def.trigger)) {
+    console.log(`[dry-run] trigger: reaction :${def.trigger.emoji}: (app ${def.trigger.appId})`);
+    const ref = resolveMessageRef(payload);
+    console.log(`[dry-run] target: channel=${ref.channel} ts=${ref.ts}`);
+  } else {
+    console.log(`[dry-run] trigger url: ${def.trigger.url}`);
+    console.log(`[dry-run] context: ${JSON.stringify(resolveContext(def, payload))}`);
+  }
   def.pages.forEach((page, p) => {
     console.log(`[dry-run] page ${p}:`);
     for (const f of page.fields) {

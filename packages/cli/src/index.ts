@@ -50,6 +50,8 @@ export function run(argv: string[]): void {
     .argument("<trigger-url>", "the Slack shortcut/trigger URL to trip")
     .requiredOption("--name <name>", "name for the generated workflow (file workflows/<name>.ts)")
     .requiredOption("--channel <id>", "channel id to trip the trigger from")
+    .option("--reaction <emoji>", "emit a reaction trigger (e.g. accessibility) instead of a shortcut trigger; still trips <trigger-url> to capture the modal")
+    .option("--app-id <id>", "workflow bot app id for the reaction trigger (required with --reaction)")
     .option("-p, --port <port>", "CDP debug port", "9222")
     .option("--out <path>", "output path (default workflows/<name>.ts)")
     .action((url, opts) => extractCommand(url, opts));
