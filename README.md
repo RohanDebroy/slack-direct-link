@@ -82,6 +82,17 @@ slack-cli trigger share-extension-v2 --payload-file ./payload.json
 
 ## Commands
 
+| Command | What it does |
+|---|---|
+| `ensure-debug` | Start Slack in debug mode — skip if it already is (recommended first step) |
+| `launch` / `restart` | Start, or quit + relaunch, Slack with the CDP debug port |
+| `list` | List all workflows in `workflows/` with identifying metadata |
+| `trigger <name>` | Run a workflow defined in `workflows/` with a JSON payload |
+| `run` | Run a workflow whose definition is passed as JSON at runtime |
+| `extract <trigger-url>` | Scaffold a workflow definition from a live modal (never submits) |
+
+Every command takes `-p, --port <port>` (default `9222`); `trigger`/`run` take `--dry-run`.
+
 ### `ensure-debug` / `launch` / `restart`
 
 Get Slack running with the CDP debug port (default `9222`) enabled.
