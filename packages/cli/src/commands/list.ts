@@ -20,8 +20,9 @@ export async function listCommand(opts: ListOpts): Promise<void> {
     const declared = w.declaredName !== w.name ? ` (name: "${w.declaredName}")` : "";
     console.log(`${w.name}${declared}`);
     if (w.description) console.log(`  ${w.description}`);
-    console.log(`  pages: ${w.pages}  fields: ${w.fields}  channel: ${w.channelId}`);
-    console.log(`  trigger: ${w.triggerUrl}`);
+    const chan = w.channelId ? `  channel: ${w.channelId}` : "";
+    console.log(`  pages: ${w.pages}  fields: ${w.fields}${chan}`);
+    console.log(`  trigger: ${w.triggerLabel}`);
     console.log("");
   }
   for (const e of errors) {

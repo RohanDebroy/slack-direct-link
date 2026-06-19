@@ -57,8 +57,29 @@ export type PageDef = z.infer<typeof PageDefSchema>;
 export const TriggerContextSchema = z.object({ location: z.string(), channel_id: z.string() });
 export type TriggerContext = z.infer<typeof TriggerContextSchema>;
 
-export const TriggerDefSchema = z.object({ url: z.string(), context: TriggerContextSchema });
+/** Shortcut/link trigger (the original kind). `kind` omitted ⇒ treated as shortcut. */
+export const ShortcutTriggerSchema = z.object({
+  kind: z.literal("shortcut").optional(),
+  url: z.string(),
+  context: TriggerContextSchema,
+});
+export type ShortcutTrigger = z.infer<typeof ShortcutTriggerSchema>;
+
+/** Reaction (event) trigger: react with `emoji`; `appId` identifies the bot's Continue DM. */
+export const ReactionTriggerSchema = z.object({
+  kind: z.literal("reaction"),
+  emoji: z.string().min(1),
+  appId: z.string().min(1),
+});
+export type ReactionTrigger = z.infer<typeof ReactionTriggerSchema>;
+
+// Reaction first: it carries an explicit `kind`; a shortcut object (kind absent) matches the second.
+export const TriggerDefSchema = z.union([ReactionTriggerSchema, ShortcutTriggerSchema]);
 export type TriggerDef = z.infer<typeof TriggerDefSchema>;
+
+export function isReactionTrigger(t: TriggerDef): t is ReactionTrigger {
+  return (t as { kind?: string }).kind === "reaction";
+}
 
 /** The serialisable (JSON-expressible) part of a workflow definition. */
 export const WorkflowDefinitionSchema = z.object({

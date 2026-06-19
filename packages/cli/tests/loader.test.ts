@@ -61,7 +61,7 @@ test("listWorkflows summarizes valid workflows and reports invalid ones", async 
   expect(good!.fields).toBe(1);
   expect(good!.fieldKeys).toEqual(["title"]);
   expect(good!.channelId).toBe("C1");
-  expect(good!.triggerUrl).toBe("https://slack/x");
+  expect(good!.triggerLabel).toBe("https://slack/x");
   expect(errors.some((e) => e.file === "bad-workflow.ts")).toBe(true);
 });
 

@@ -7,7 +7,8 @@ import {
   viewsSubmit as _viewsSubmit,
   waitFor as _waitFor,
 } from "@slack-automate/core";
-import type { WorkflowDefinition, TriggerContext } from "./definition.ts";
+import type { WorkflowDefinition, TriggerContext, ShortcutTrigger } from "./definition.ts";
+import { isReactionTrigger } from "./definition.ts";
 import { buildState, blockIdMap } from "./build-state.ts";
 
 type ViewOpened = Extract<SlackEvent, { type: "view_opened" }>;
@@ -40,6 +41,7 @@ const DEFAULT_DEPS: RunDeps = {
 };
 
 export function resolveContext(def: WorkflowDefinition, payload: Record<string, unknown>): TriggerContext {
+  if (isReactionTrigger(def.trigger)) throw new Error("resolveContext: trigger is not a shortcut trigger");
   if (def.buildContext) return def.buildContext(payload);
   const channel = payload._channel;
   if (typeof channel === "string") return { ...def.trigger.context, channel_id: channel };
@@ -62,8 +64,9 @@ export async function runWorkflow(input: RunInput): Promise<RunOutput> {
     { timeout },
   );
 
+  const shortcutTrigger = def.trigger as ShortcutTrigger;
   const trip = await d.triggersTrip(session, {
-    url: def.trigger.url,
+    url: shortcutTrigger.url,
     context: resolveContext(def, payload),
     run_precheck: true,
     client_token,
