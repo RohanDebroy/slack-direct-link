@@ -70,9 +70,8 @@ Point `SLACK_CLI_WORKFLOWS_DIR` at another directory to load workflows from else
 ## Quick start
 
 ```bash
-# 1. Start Slack with the debug port open
-slack-cli restart                       # quits a running Slack, relaunches in debug mode
-#   (or `slack-cli launch` if Slack isn't open yet)
+# 1. Make sure Slack is running in debug mode (no-op if it already is)
+slack-cli ensure-debug
 
 # 2. Preview a trigger — no Slack calls
 slack-cli trigger share-extension-v2 --dry-run --payload '{ ... }'
@@ -83,7 +82,7 @@ slack-cli trigger share-extension-v2 --payload-file ./payload.json
 
 ## Commands
 
-### `launch` / `restart`
+### `ensure-debug` / `launch` / `restart`
 
 Get Slack running with the CDP debug port (default `9222`) enabled.
 
@@ -296,7 +295,7 @@ bun run typecheck  # tsc -b --noEmit
 ## Troubleshooting
 
 - **"Couldn't reach Slack on localhost:9222"** — Slack isn't running with the debug port.
-  Run `slack-cli restart`.
+  Run `slack-cli ensure-debug`.
 - **"could not locate xoxc token in renderer"** — Slack moved the token location in a new
   client version. See `packages/core/src/api/client.ts` (`HARVEST_TOKEN_JS`).
 - **`enterprise_is_restricted` on conversations.list** — your Grid restricts that API; pass
@@ -304,3 +303,7 @@ bun run typecheck  # tsc -b --noEmit
 - **`buildState: no block_id in view for action_id <X>`** — the workflow's form changed in
   Slack and the definition has drifted. Re-extract it (`slack-cli extract …`) and update the
   definition.
+
+## Credits
+
+Built by Rohan Debroy — https://github.com/rohandebroy
