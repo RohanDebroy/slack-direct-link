@@ -240,3 +240,25 @@ test("fileUpload links multiple uploaded file ids into one file_input", () => {
   );
   expect(values["B_f"]).toEqual({ A_f: { type: "file_input", files: [{ id: "F1" }, { id: "F2" }] } });
 });
+
+const selectOpts = [
+  { text: { type: "plain_text", text: "Yes", emoji: true }, value: "Yes" },
+  { text: { type: "plain_text", text: "No", emoji: true }, value: "No" },
+];
+const selectPage = { fields: [{ key: "urgent", actionId: "A_s", format: "staticSelect" as const, options: selectOpts }] };
+const selectBlocks = blockIdMap([{ block_id: "B_s", element: { action_id: "A_s" } }]);
+
+test("staticSelect: payload value selects the matching option (echoing the full option)", () => {
+  const { values } = buildState(selectPage, { urgent: "Yes" }, selectBlocks, new Map());
+  expect(values["B_s"]).toEqual({ A_s: { type: "static_select", selected_option: selectOpts[0] } });
+});
+
+test("staticSelect: a value not in the catalog throws", () => {
+  expect(() => buildState(selectPage, { urgent: "Maybe" }, selectBlocks, new Map())).toThrow(/not one of/);
+});
+
+test("staticSelect: missing required value throws; optional unfilled is present-but-empty", () => {
+  expect(() => buildState(selectPage, {}, selectBlocks, new Map())).toThrow(/missing required field/);
+  const optPage = { fields: [{ key: "urgent", actionId: "A_s", format: "staticSelect" as const, optional: true, options: selectOpts }] };
+  expect(buildState(optPage, {}, selectBlocks, new Map()).values["B_s"]).toEqual({ A_s: { type: "static_select" } });
+});

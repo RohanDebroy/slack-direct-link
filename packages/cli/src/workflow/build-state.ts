@@ -92,6 +92,7 @@ function defaultFormat(field: FieldDef, raw: unknown): unknown {
     case "conversation": return { type: "conversations_select", selected_conversation: String(raw) };
     case "fileUpload": throw new Error(`buildState: fileUpload field "${field.key}" must resolve via uploadedIds`);
     case "checkboxes": throw new Error(`buildState: checkboxes field "${field.key}" must resolve via its options catalog`);
+    case "staticSelect": throw new Error(`buildState: staticSelect field "${field.key}" must resolve via its options catalog`);
     default: {
       const _exhaustive: never = field.format;
       throw new Error(`buildState: unhandled format "${String(_exhaustive)}"`);
@@ -109,6 +110,7 @@ const EMPTY_INPUT_TYPE: Record<FieldDef["format"], string> = {
   conversation: "conversations_select",
   fileUpload: "file_input",
   checkboxes: "checkboxes",
+  staticSelect: "static_select",
 };
 
 export function buildState(
@@ -157,6 +159,23 @@ export function buildState(
         continue;
       }
       put(field.actionId, { type: "checkboxes", selected_options: selected });
+      continue;
+    }
+    if (field.format === "staticSelect") {
+      const opts = field.options ?? [];
+      const want = payload[field.key];
+      if (want === undefined) {
+        if (field.optional) { putEmpty(field); continue; }
+        throw new Error(`buildState: missing required field "${field.key}"`);
+      }
+      if (opts.length === 0) {
+        throw new Error(`buildState: staticSelect field "${field.key}" has no options catalog (re-run extract)`);
+      }
+      const chosen = opts.find((o) => o.value === String(want));
+      if (!chosen) {
+        throw new Error(`buildState: staticSelect field "${field.key}" value ${JSON.stringify(want)} is not one of ${opts.map((o) => o.value).join(", ")}`);
+      }
+      put(field.actionId, { type: "static_select", selected_option: chosen });
       continue;
     }
     const raw = payload[field.key];

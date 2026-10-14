@@ -41,6 +41,7 @@ const ELEMENT_FORMAT: Record<string, Format> = {
   conversations_select: "conversation",
   file_input: "fileUpload",
   checkboxes: "checkboxes",
+  static_select: "staticSelect",
 };
 
 /** "Extension Version" -> "extensionVersion"; "" -> "". */
@@ -91,10 +92,10 @@ export function viewToDefinition(view: ExtractableView, meta: ExtractMeta): Extr
     const field: FieldDef = block.optional
       ? { key, actionId, format, optional: true }
       : { key, actionId, format };
-    if (format === "checkboxes") {
+    if (format === "checkboxes" || format === "staticSelect") {
       const opts = (block.element?.options ?? []) as FieldDef["options"];
       if (opts && opts.length) field.options = opts;
-      else warnings.push(`field "${key}": checkboxes has no options in the modal — verify the catalog`);
+      else warnings.push(`field "${key}": ${format} has no options in the modal — verify the catalog`);
     }
     fields.push(field);
 
