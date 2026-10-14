@@ -54,11 +54,10 @@ export async function attach(opts: ConnectOptions): Promise<Session> {
     },
     on(event, handler) {
       // The typed event-callback API returns an unsubscribe function.
-      // (event is statically "Network.webSocketFrameReceived" per Session interface.)
-      const unsubscribe = client.Network.webSocketFrameReceived((params) =>
-        handler(params as WssFrame),
-      );
-      void event;
+      const subscribe = event === "Network.webSocketFrameSent"
+        ? client.Network.webSocketFrameSent
+        : client.Network.webSocketFrameReceived;
+      const unsubscribe = subscribe((params) => handler(params as WssFrame));
       return () => {
         unsubscribe();
       };

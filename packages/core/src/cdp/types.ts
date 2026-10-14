@@ -1,6 +1,6 @@
 export interface Session {
   evaluate<T>(expression: string): Promise<T>;
-  on(event: "Network.webSocketFrameReceived", handler: (params: WssFrame) => void): () => void;
+  on(event: "Network.webSocketFrameReceived" | "Network.webSocketFrameSent", handler: (params: WssFrame) => void): () => void;
   close(): Promise<void>;
 }
 
