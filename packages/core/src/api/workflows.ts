@@ -34,18 +34,34 @@ export interface TriggersTripInput {
   client_token?: string;
 }
 
+function canTripTrigger(raw: unknown): boolean {
+  const info = (raw as { pre_trip_info?: { can_trip_trigger?: boolean } }).pre_trip_info;
+  return info?.can_trip_trigger === true;
+}
+
 export async function triggersTrip(
   session: Session,
   input: TriggersTripInput,
 ): Promise<TriggersTripResponse> {
   const client_token = input.client_token ?? `web-${Date.now()}`;
-  const raw = await apiCall<unknown>(session, "workflows.triggers.trip", {
-    url: input.url,
-    context: JSON.stringify(input.context),
-    run_precheck: input.run_precheck ?? true,
-    client_token,
-  });
-  const errResult = SlackError.safeParse(raw);
+  const trip = (run_precheck: boolean) =>
+    apiCall<unknown>(session, "workflows.triggers.trip", {
+      url: input.url,
+      context: JSON.stringify(input.context),
+      run_precheck,
+      client_token,
+    });
+
+  let raw = await trip(input.run_precheck ?? true);
+  let errResult = SlackError.safeParse(raw);
+  // A workflow needing newly-added scopes returns `pretrip_ack_required` with a consent
+  // speedbump (e.g. a step that reads a Slack list adds `lists:read`). When the backend
+  // still reports the trigger can be tripped, mirror the web client: acknowledge by
+  // re-tripping once with the precheck disabled.
+  if (errResult.success && errResult.data.error === "pretrip_ack_required" && canTripTrigger(raw)) {
+    raw = await trip(false);
+    errResult = SlackError.safeParse(raw);
+  }
   if (errResult.success) {
     throw new TriggersTripError(errResult.data.error ?? "unknown", raw);
   }

@@ -163,7 +163,7 @@ interface ReactionRunInput {
 
 function extractContinue(msg: SlackMessage, appId: string): {
   container: { type: string; message_ts: string; attachment_id: number; channel_id: string; is_ephemeral: boolean };
-  action: { action_id: string; block_id: string; value?: string; type: string };
+  action: { action_id: string; block_id: string; value?: string; type: string; text?: unknown };
   serviceId: string;
   serviceTeamId: string;
 } {
@@ -172,15 +172,20 @@ function extractContinue(msg: SlackMessage, appId: string): {
   let blockId: string | undefined;
   let actionId: string | undefined;
   let value: string | undefined;
+  let text: unknown;
   for (const b of att.blocks ?? []) {
     const button = (b.elements ?? []).find((e) => e.type === "button" && e.action_id);
-    if (button) { blockId = b.block_id; actionId = button.action_id; value = button.value; break; }
+    if (button) { blockId = b.block_id; actionId = button.action_id; value = button.value; text = (button as { text?: unknown }).text; break; }
   }
   if (!blockId || !actionId) throw new Error(`reaction trigger: no Continue button found in the prompt from app ${appId}`);
-  const action: { action_id: string; block_id: string; value?: string; type: string } =
-    value !== undefined
-      ? { action_id: actionId, block_id: blockId, value, type: "button" }
-      : { action_id: actionId, block_id: blockId, type: "button" };
+  // Slack's blocks.actions rejects an action missing `text` (the button label object); echo it back.
+  const action: { action_id: string; block_id: string; value?: string; type: string; text?: unknown } = {
+    action_id: actionId,
+    block_id: blockId,
+    type: "button",
+    ...(value !== undefined ? { value } : {}),
+    ...(text !== undefined ? { text } : {}),
+  };
   return {
     container: { type: "message_attachment", message_ts: msg.ts, attachment_id: att.id ?? 1, channel_id: msg.channel, is_ephemeral: false },
     action,
