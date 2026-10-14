@@ -35,7 +35,10 @@ export async function attach(opts: ConnectOptions): Promise<Session> {
   const target = findTarget(targets, urlMatch);
   const client = await CDP({ port, target: target.webSocketDebuggerUrl });
   await client.Runtime.enable();
-  await client.Network.enable({});
+  // Cap post data mirrored into requestWillBeSent: unset, Chrome copies every request body
+  // (e.g. a 25 MB upload -> ~60 MB of event text) through Slack's processes to us. We only
+  // consume WebSocket frames, which this limit does not affect.
+  await client.Network.enable({ maxPostDataSize: 1024 });
 
   return {
     async evaluate<T>(expression: string): Promise<T> {
