@@ -6,6 +6,7 @@ import { extractCommand } from "./commands/extract.ts";
 import { triggerCommand } from "./commands/trigger.ts";
 import { runCommand } from "./commands/run.ts";
 import { listCommand } from "./commands/list.ts";
+import { probeCommand } from "./commands/probe.ts";
 
 export function run(argv: string[]): void {
   const AUTHOR = "Rohan Debroy";
@@ -82,6 +83,12 @@ export function run(argv: string[]): void {
     .option("-p, --port <port>", "CDP debug port", "9222")
     .option("--dry-run", "validate and print the resolved payload without calling Slack")
     .action((opts) => runCommand(opts));
+
+  program
+    .command("probe")
+    .description("Stream every Slack WebSocket frame (sent + received) to stdout as NDJSON, one untruncated frame per line")
+    .option("-p, --port <port>", "CDP debug port", "9222")
+    .action((opts) => probeCommand({ port: Number(opts.port) }));
 
   program.parseAsync(argv).catch((err) => {
     console.error(err.message ?? String(err));

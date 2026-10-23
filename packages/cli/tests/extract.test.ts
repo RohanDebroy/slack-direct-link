@@ -11,7 +11,11 @@ const view = {
     { block_id: "b4", label: { text: "Reviewed By" }, element: { type: "conversations_select", action_id: "A_rev" } },
     { block_id: "b5", label: { text: "Attachment" }, element: { type: "file_input", action_id: "A_file" } },
     { block_id: "b6", optional: true, label: { text: "Notes" }, element: { type: "rich_text_input", action_id: "A_notes" } },
-    { block_id: "b7", label: { text: "Priority" }, element: { type: "static_select", action_id: "A_prio" } }, // unsupported
+    { block_id: "b7", label: { text: "Priority" }, element: { type: "static_select", action_id: "A_prio", options: [
+      { text: { type: "plain_text", text: "High", emoji: true }, value: "high" },
+      { text: { type: "plain_text", text: "Low", emoji: true }, value: "low" },
+    ] } },
+    { block_id: "b7x", label: { text: "When" }, element: { type: "datepicker", action_id: "A_when" } }, // unsupported
     { block_id: "b8", label: { text: "Link" }, element: { type: "plain_text_input", action_id: "A_l1" } },
     { block_id: "b9", label: { text: "Link" }, element: { type: "plain_text_input", action_id: "A_l2" } }, // dup label
   ],
@@ -24,9 +28,9 @@ test("viewToDefinition maps element types, labels->keys, optional, and trigger",
   expect(definition.name).toBe("share-extension-x");
   expect(definition.trigger).toEqual({ url: "https://slack.com/shortcuts/Ft1/abc", context: { location: "slash_command", channel_id: "C123" } });
   const fields = definition.pages[0]!.fields;
-  // header (no action_id) and static_select (unsupported) are excluded -> 8 fields
+  // header (no action_id) and datepicker (unsupported) are excluded -> 9 fields
   expect(fields.map((f) => f.key)).toEqual([
-    "extensionVersion", "jiraLink", "whomToTag", "reviewedBy", "attachment", "notes", "link", "link2",
+    "extensionVersion", "jiraLink", "whomToTag", "reviewedBy", "attachment", "notes", "priority", "link", "link2",
   ]);
   expect(fields.find((f) => f.key === "extensionVersion")).toEqual({ key: "extensionVersion", actionId: "A_ext", format: "plain" });
   expect(fields.find((f) => f.key === "jiraLink")!.format).toBe("richText");
@@ -34,13 +38,20 @@ test("viewToDefinition maps element types, labels->keys, optional, and trigger",
   expect(fields.find((f) => f.key === "reviewedBy")!.format).toBe("conversation");
   expect(fields.find((f) => f.key === "attachment")!.format).toBe("fileUpload");
   expect(fields.find((f) => f.key === "notes")).toEqual({ key: "notes", actionId: "A_notes", format: "richText", optional: true });
+  expect(fields.find((f) => f.key === "priority")).toEqual({
+    key: "priority", actionId: "A_prio", format: "staticSelect",
+    options: [
+      { text: { type: "plain_text", text: "High", emoji: true }, value: "high" },
+      { text: { type: "plain_text", text: "Low", emoji: true }, value: "low" },
+    ],
+  });
 });
 
 test("viewToDefinition warns about ambiguous rich_text and skips unsupported types", () => {
   const { warnings } = viewToDefinition(view, meta);
   expect(warnings.some((w) => /jiraLink.*rich_text/i.test(w))).toBe(true);
   expect(warnings.some((w) => /notes.*rich_text/i.test(w))).toBe(true);
-  expect(warnings.some((w) => /static_select/.test(w) && /A_prio/.test(w))).toBe(true);
+  expect(warnings.some((w) => /datepicker/.test(w) && /A_when/.test(w))).toBe(true);
 });
 
 test("definitionToSource emits a valid, re-importable module", () => {

@@ -12,6 +12,7 @@ import type { ViewsSubmitResponse } from "@slack-automate/core";
  *   multiConversations  -> multi_conversations_select (expects string[])
  *   conversation        -> conversations_select (expects string)
  *   fileUpload          -> upload a local file, link the returned id as file_input
+ *   staticSelect        -> static_select, payload value picks an option by `value`
  */
 export const FormatSchema = z.enum([
   "plain",
@@ -23,14 +24,18 @@ export const FormatSchema = z.enum([
   "conversation",
   "fileUpload",
   "checkboxes",
+  "staticSelect",
 ]);
 export type Format = z.infer<typeof FormatSchema>;
 /** Runtime list of valid formats, derived from the schema. */
 export const FORMATS = FormatSchema.options;
 
+// Shared option catalog for `checkboxes` and `staticSelect`. Only `value` is consumed
+// when building the submit state (the whole option is echoed back), so `text` is left
+// permissive — static_select labels arrive as rich_text, not the plain_text checkboxes use.
 export const CheckboxOptionSchema = z
   .object({
-    text: z.object({ type: z.string(), text: z.string() }).passthrough(),
+    text: z.object({ type: z.string() }).passthrough(),
     value: z.string(),
   })
   .passthrough();
@@ -46,7 +51,7 @@ export const FieldDefSchema = z.object({
   optional: z.boolean().optional(),
   /** When true (richText/bulletText only), pasted URLs become highlighted link elements. */
   autolink: z.boolean().optional(),
-  /** Option catalog for `checkboxes` fields (captured from the modal by `extract`). */
+  /** Option catalog for `checkboxes`/`staticSelect` fields (captured from the modal by `extract`). */
   options: z.array(CheckboxOptionSchema).optional(),
 });
 export type FieldDef = z.infer<typeof FieldDefSchema>;
