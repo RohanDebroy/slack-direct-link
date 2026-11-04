@@ -7,6 +7,7 @@ import { triggerCommand } from "./commands/trigger.ts";
 import { runCommand } from "./commands/run.ts";
 import { listCommand } from "./commands/list.ts";
 import { probeCommand } from "./commands/probe.ts";
+import { reactCommand } from "./commands/react.ts";
 
 export function run(argv: string[]): void {
   const AUTHOR = "Rohan Debroy";
@@ -89,6 +90,16 @@ export function run(argv: string[]): void {
     .description("Stream every Slack WebSocket frame (sent + received) to stdout as NDJSON, one untruncated frame per line")
     .option("-p, --port <port>", "CDP debug port", "9222")
     .action((opts) => probeCommand({ port: Number(opts.port) }));
+
+program
+  .command("react")
+  .description("Add an emoji reaction to a message (or remove it with --remove)")
+  .argument("<channel>", "channel id")
+  .argument("<ts>", "message ts")
+  .argument("<emoji>", "emoji name, with or without colons")
+  .option("--remove", "remove the reaction instead of adding it")
+  .option("-p, --port <port>", "debug port", "9222")
+  .action((channel, ts, emoji, opts) => reactCommand(channel, ts, emoji, { port: Number(opts.port), remove: opts.remove }));
 
   program.parseAsync(argv).catch((err) => {
     console.error(err.message ?? String(err));
