@@ -30,3 +30,15 @@ export async function reactionsAdd(session: Session, input: ReactionsAddInput): 
   const err = SlackError.safeParse(raw);
   if (err.success) throw new ReactionsAddError(err.data.error ?? "unknown", raw);
 }
+
+export async function reactionsRemove(session: Session, input: ReactionsAddInput): Promise<void> {
+  const raw = await apiCall<unknown>(session, "reactions.remove", {
+    channel: input.channel,
+    timestamp: input.timestamp,
+    name: input.name,
+  });
+  const err = SlackError.safeParse(raw);
+  if (err.success) {
+    throw new Error(`Slack API reactions.remove returned ok:false (error="${err.data.error ?? "unknown"}"). Raw response: ${JSON.stringify(raw)}`);
+  }
+}

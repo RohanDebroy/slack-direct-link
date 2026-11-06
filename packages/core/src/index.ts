@@ -1,7 +1,7 @@
 export { attach, NoSlackTargetError, CdpUnreachableError } from "./cdp/connect.ts";
 export type { Session, ConnectOptions, WssFrame } from "./cdp/types.ts";
 export { triggersTrip } from "./api/workflows.ts";
-export { reactionsAdd } from "./api/reactions.ts";
+export { reactionsAdd, reactionsRemove } from "./api/reactions.ts";
 export { blocksActions } from "./api/blocks.ts";
 export type { BlocksActionsContainer, BlocksActionsAction, BlocksActionsInput } from "./api/blocks.ts";
 export { viewsGet, viewsSubmit } from "./api/views.ts";
